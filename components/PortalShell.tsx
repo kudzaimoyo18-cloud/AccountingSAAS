@@ -6,6 +6,7 @@ import { signOut } from "@/lib/actions";
 const NAV = [
   { href: "/app", label: "Overview", icon: "M2 8.5 8 3l6 5.5M3.5 7.5V13h3v-3h3v3h3V7.5" },
   { href: "/app/documents", label: "Documents", icon: "M4 2h5l3 3v9H4zM9 2v3h3" },
+  { href: "/app/billing", label: "Billing", icon: "M2 5h12v8H2zM2 7.5h12M5 11h2" },
   { href: "/app/settings", label: "Settings", icon: "M8 5.5A2.5 2.5 0 1 0 8 10.5 2.5 2.5 0 0 0 8 5.5zM8 1v2M8 13v2M15 8h-2M3 8H1M12.95 3.05l-1.4 1.4M4.46 11.54l-1.41 1.41M12.95 12.95l-1.4-1.4M4.46 4.46 3.05 3.05" },
 ];
 

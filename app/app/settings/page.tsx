@@ -50,8 +50,11 @@ export default async function SettingsPage() {
             <span className="ml-1 text-sm font-normal text-ink-soft">/month</span>
           </p>
           <p className="mt-3 text-sm text-ink-soft">
-            Billing via Ziina launches soon — your founding-member rate is locked.
-            To change plans, message us.
+            Pay securely via Ziina on the{" "}
+            <a href="/app/billing" className="text-brass-deep underline underline-offset-4">
+              billing page
+            </a>
+            . Your founding-member rate is locked.
           </p>
         </div>
       </div>

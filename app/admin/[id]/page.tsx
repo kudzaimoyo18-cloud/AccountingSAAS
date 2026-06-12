@@ -6,6 +6,7 @@ import {
   addComplianceItem,
   setComplianceStatus,
   markDocProcessed,
+  setCompanyStatus,
 } from "@/lib/admin-actions";
 
 export const metadata = { title: "Client — Mizan Admin" };
@@ -53,6 +54,26 @@ export default async function AdminCompanyPage({
           {company.free_zone ?? "—"} · {company.plan} plan · license{" "}
           <span className="tnum">{company.license_no ?? "—"}</span>
         </p>
+
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <StatusBadge status={company.status} />
+          <form action={setCompanyStatus} className="flex items-center gap-2">
+            <input type="hidden" name="company_id" value={company.id} />
+            <select
+              name="status"
+              defaultValue={company.status}
+              className="field w-40 px-3 py-1.5 text-xs"
+              aria-label="Company status"
+            >
+              <option value="onboarding">Onboarding</option>
+              <option value="active">Active (paid)</option>
+              <option value="paused">Paused</option>
+            </select>
+            <button type="submit" className="btn-ghost px-3 py-1.5 text-xs">
+              Update
+            </button>
+          </form>
+        </div>
 
         <h2 className="mt-10 font-display text-xl font-medium">Compliance items</h2>
 

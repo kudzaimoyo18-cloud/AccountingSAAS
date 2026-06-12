@@ -89,3 +89,25 @@ export async function markDocProcessed(formData: FormData) {
   revalidatePath(`/admin/${companyId}`);
   redirect(`/admin/${companyId}`);
 }
+
+const COMPANY_STATUSES = ["onboarding", "active", "paused"];
+
+export async function setCompanyStatus(formData: FormData) {
+  const { supabase } = await requireAdmin();
+
+  const id = String(formData.get("company_id") ?? "");
+  const status = String(formData.get("status") ?? "");
+
+  if (!id || !COMPANY_STATUSES.includes(status)) redirect(`/admin/${id}`);
+
+  const { error } = await supabase
+    .from("companies")
+    .update({ status })
+    .eq("id", id);
+
+  if (error) console.error("[setCompanyStatus]", error.message);
+
+  revalidatePath(`/admin/${id}`);
+  revalidatePath("/admin");
+  redirect(`/admin/${id}`);
+}
