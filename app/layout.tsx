@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, IBM_Plex_Sans } from "next/font/google";
+import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 
 const display = Fraunces({
@@ -18,6 +19,15 @@ const sans = IBM_Plex_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://mizan-tan.vercel.app"),
+  keywords: [
+    "UAE corporate tax",
+    "free zone accounting",
+    "VAT filing UAE",
+    "Dubai bookkeeping",
+    "FTA tax agent",
+    "corporate tax registration UAE",
+  ],
   title: "Mizan — Books balanced. Taxes filed. Done.",
   description:
     "AI-native accounting, VAT and corporate tax for UAE free-zone companies. We do the work — you get clean books and on-time filings. Fixed monthly fee.",
@@ -42,7 +52,10 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInit }} />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }

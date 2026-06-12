@@ -7,10 +7,12 @@ import { Pricing } from "@/components/Pricing";
 import { Faq } from "@/components/Faq";
 import { CtaSection } from "@/components/CtaSection";
 import { Footer } from "@/components/Footer";
+import { StructuredData } from "@/components/StructuredData";
 
 export default function Page() {
   return (
     <>
+      <StructuredData />
       <Nav />
       <main>
         <Hero />
