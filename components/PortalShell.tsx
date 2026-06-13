@@ -39,15 +39,26 @@ export function PortalShell({
             </Link>
           ))}
           {isAdmin && (
-            <Link
-              href="/admin"
-              className={`sidebar-link mt-4 border border-dashed border-brass/40 text-brass-deep ${active === "/admin" ? "sidebar-link-active" : ""}`}
-            >
-              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden>
-                <path d="M8 1l2 4 4.5.5-3.5 3 1 4.5L8 10.5 4 13l1-4.5-3.5-3L6 5z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-              </svg>
-              Admin
-            </Link>
+            <>
+              <Link
+                href="/admin"
+                className={`sidebar-link mt-4 border border-dashed border-brass/40 text-brass-deep ${active === "/admin" ? "sidebar-link-active" : ""}`}
+              >
+                <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden>
+                  <path d="M8 1l2 4 4.5.5-3.5 3 1 4.5L8 10.5 4 13l1-4.5-3.5-3L6 5z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+                </svg>
+                Clients
+              </Link>
+              <Link
+                href="/admin/waitlist"
+                className={`sidebar-link border border-dashed border-brass/40 text-brass-deep ${active === "/admin/waitlist" ? "sidebar-link-active" : ""}`}
+              >
+                <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden>
+                  <path d="M2 4h12M2 8h12M2 12h8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                </svg>
+                Waitlist
+              </Link>
+            </>
           )}
         </nav>
         <div className="flex items-center justify-between border-t border-line pt-4">
