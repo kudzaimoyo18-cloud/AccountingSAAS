@@ -1,14 +1,17 @@
 // Waitlist persistence with graceful degradation.
 // Uses Supabase when env is present, otherwise appends to a local JSON file.
-// Table expected (see README): public.waitlist (id, email, company, stage, created_at)
+// Table expected (see README): public.waitlist (id, email, company, stage, region, created_at)
 
 import { promises as fs } from "fs";
 import path from "path";
+
+export type Region = "ae" | "gb";
 
 export type WaitlistEntry = {
   email: string;
   company?: string;
   stage?: string;
+  region?: Region;
   created_at: string;
 };
 
@@ -21,6 +24,15 @@ function hasSupabase(): boolean {
   );
 }
 
+// True when Supabase rejects the insert because the `region` column is absent.
+// Lets databases created before the region migration keep accepting signups.
+function isMissingRegionColumn(error: { code?: string; message?: string }): boolean {
+  const code = error.code ?? "";
+  if (code === "42703" || code === "PGRST204") return true;
+  const msg = (error.message ?? "").toLowerCase();
+  return msg.includes("region") && msg.includes("column");
+}
+
 async function saveSupabase(entry: WaitlistEntry): Promise<void> {
   const { createClient } = await import("@supabase/supabase-js");
   const client = createClient(
@@ -28,11 +40,25 @@ async function saveSupabase(entry: WaitlistEntry): Promise<void> {
     process.env.SUPABASE_SERVICE_ROLE_KEY as string,
     { auth: { persistSession: false } }
   );
-  const { error } = await client.from("waitlist").insert({
+
+  const base = {
     email: entry.email,
     company: entry.company ?? null,
     stage: entry.stage ?? null,
-  });
+  };
+
+  // Prefer storing region; fall back gracefully if the column is not there yet.
+  let { error } = await client
+    .from("waitlist")
+    .insert({ ...base, region: entry.region ?? "ae" });
+
+  if (error && isMissingRegionColumn(error)) {
+    console.warn(
+      "[waitlist] `region` column missing — run the ALTER TABLE in README. Saving without region."
+    );
+    ({ error } = await client.from("waitlist").insert(base));
+  }
+
   if (error) throw new Error(error.message);
 }
 
