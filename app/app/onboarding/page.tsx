@@ -34,16 +34,32 @@ export default async function OnboardingPage({
             <input id="name" name="name" required maxLength={200} placeholder="Acme Trading FZ-LLC" className="field" />
           </div>
           <div>
+            <label htmlFor="region" className="mb-1.5 block text-sm font-medium">
+              Country / tax regime
+            </label>
+            <select id="region" name="region" className="field" defaultValue="ae">
+              <option value="ae">🇦🇪 UAE — FTA · 5% VAT · 9% corporate tax</option>
+              <option value="gb">🇬🇧 UK — HMRC · 20% VAT · MTD</option>
+            </select>
+            <p className="mt-1.5 text-xs text-ink-soft">
+              Sets your currency, VAT rate, chart of accounts and filing deadlines.
+            </p>
+          </div>
+          <div>
             <label htmlFor="free_zone" className="mb-1.5 block text-sm font-medium">
-              Free zone / jurisdiction
+              Free zone / jurisdiction <span className="text-ink-soft">(UAE only)</span>
             </label>
             <select id="free_zone" name="free_zone" className="field" defaultValue="">
-              <option value="" disabled>Select…</option>
+              <option value="">Select…</option>
               {ZONES.map((z) => (
                 <option key={z} value={z}>{z}</option>
               ))}
             </select>
           </div>
+          <label className="flex items-center gap-2.5 text-sm">
+            <input type="checkbox" name="vat_registered" defaultChecked className="h-4 w-4 rounded border-line" />
+            <span>VAT registered — split VAT out of every transaction</span>
+          </label>
           <div>
             <label htmlFor="license_no" className="mb-1.5 block text-sm font-medium">
               Trade license number <span className="text-ink-soft">(optional)</span>

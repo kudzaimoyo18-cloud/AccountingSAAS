@@ -8,6 +8,7 @@ const FREE_ZONES = [
   "IFZA", "DMCC", "Meydan", "SHAMS", "RAKEZ", "DAFZA", "JAFZA", "ADGM", "DIFC", "Mainland", "Other",
 ] as const;
 const PLANS = ["starter", "growth", "pro"] as const;
+const REGIONS = ["ae", "gb"] as const;
 
 export async function createCompany(formData: FormData) {
   const supabase = await createClient();
@@ -20,8 +21,12 @@ export async function createCompany(formData: FormData) {
   const freeZone = String(formData.get("free_zone") ?? "").trim();
   const licenseNo = String(formData.get("license_no") ?? "").trim().slice(0, 100);
   const plan = String(formData.get("plan") ?? "starter");
+  const region = String(formData.get("region") ?? "ae");
+  const vatRegistered = formData.get("vat_registered") === "on";
 
   if (!name) redirect("/app/onboarding?error=Company+name+is+required");
+  if (!REGIONS.includes(region as (typeof REGIONS)[number]))
+    redirect("/app/onboarding?error=Invalid+region");
   if (!PLANS.includes(plan as (typeof PLANS)[number]))
     redirect("/app/onboarding?error=Invalid+plan");
   if (freeZone && !FREE_ZONES.includes(freeZone as (typeof FREE_ZONES)[number]))
@@ -30,9 +35,11 @@ export async function createCompany(formData: FormData) {
   const { error } = await supabase.from("companies").insert({
     owner_id: user.id,
     name,
-    free_zone: freeZone || null,
+    free_zone: region === "ae" ? freeZone || null : null,
     license_no: licenseNo || null,
     plan,
+    region,
+    vat_registered: vatRegistered,
   });
 
   if (error) {
