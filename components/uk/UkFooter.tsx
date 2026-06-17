@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Logo } from "@/components/Logo";
 
 export function UkFooter() {
@@ -7,15 +8,21 @@ export function UkFooter() {
         <div className="space-y-2">
           <Logo />
           <p className="max-w-sm text-sm text-ink-soft">
-            Bookkeeping, VAT and Making Tax Digital for UK freelancers and sole
-            traders. Reviewed and filed by an HMRC-registered agent.
+            Bookkeeping and Making Tax Digital software for UK freelancers and
+            sole traders. You review and approve; your tax agent files.
           </p>
         </div>
-        <p className="text-xs text-ink-soft">
-          © {new Date().getFullYear()} Mizan. Built for UK freelancers.
-          <br />
-          Not a substitute for formal tax advice.
-        </p>
+        <div className="space-y-2 sm:text-right">
+          <nav className="flex gap-4 text-sm text-ink-soft sm:justify-end" aria-label="Legal">
+            <Link href="/terms" className="transition-colors hover:text-ink">Terms</Link>
+            <Link href="/privacy" className="transition-colors hover:text-ink">Privacy</Link>
+          </nav>
+          <p className="text-xs text-ink-soft">
+            © {new Date().getFullYear()} Mizan.
+            <br />
+            Software, not tax advice.
+          </p>
+        </div>
       </div>
     </footer>
   );

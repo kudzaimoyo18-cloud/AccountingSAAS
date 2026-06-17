@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { PortalShell } from "@/components/PortalShell";
 import { BooksTabs } from "@/components/books/BooksTabs";
 import { CategoryBadge, ConfidenceMeter } from "@/components/books/ui";
+import { ControlNotice } from "@/components/books/ControlNotice";
 import { getProfile } from "@/lib/portal";
 import { getActiveCompany, listTransactions } from "@/lib/books/repo";
 import { approveTransaction, reassignTransaction } from "@/lib/books/actions";
@@ -32,6 +33,8 @@ export default async function ReviewPage() {
         <div className="mt-6">
           <BooksTabs active="review" reviewCount={queue.length} />
         </div>
+
+        <ControlNotice className="mt-6" />
 
         {queue.length === 0 ? (
           <div className="card mt-6 flex flex-col items-center justify-center py-16 text-center">

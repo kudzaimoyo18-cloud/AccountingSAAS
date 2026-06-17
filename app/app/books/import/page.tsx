@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { PortalShell } from "@/components/PortalShell";
 import { BooksTabs } from "@/components/books/BooksTabs";
 import { ImportWizard } from "@/components/books/ImportWizard";
+import { ControlNotice } from "@/components/books/ControlNotice";
 import { getProfile } from "@/lib/portal";
 import { getActiveCompany, listTransactions } from "@/lib/books/repo";
 
@@ -40,6 +41,7 @@ export default async function ImportPage({
         )}
 
         <ImportWizard />
+        <ControlNotice className="mt-6" />
       </div>
     </PortalShell>
   );
