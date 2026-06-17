@@ -16,13 +16,13 @@ export const metadata = { title: "Books — Mizan" };
 export default async function BooksPage({
   searchParams,
 }: {
-  searchParams: Promise<{ ok?: string; error?: string; review?: string }>;
+  searchParams: Promise<{ ok?: string; error?: string; review?: string; imported?: string; auto?: string }>;
 }) {
   const { profile } = await getProfile();
   const company = await getActiveCompany();
   if (!company) redirect("/app/onboarding");
 
-  const { ok, error } = await searchParams;
+  const { ok, error, imported, auto } = await searchParams;
   const txns = await listTransactions(company.id);
   const reports = buildReports(txns, company.region);
   const cfg = REGIONS[company.region];
@@ -56,7 +56,11 @@ export default async function BooksPage({
           </p>
         )}
 
-        {reports.reviewCount > 0 && (
+        {imported && (
+          <ImportResult total={Number(imported)} auto={Number(auto ?? 0)} review={reports.reviewCount} />
+        )}
+
+        {!imported && reports.reviewCount > 0 && (
           <Link
             href="/app/books/review"
             className="mt-4 flex items-center justify-between rounded-2xl border border-brass/40 bg-brass/5 px-5 py-3.5 transition-colors hover:bg-brass/10"
@@ -166,6 +170,47 @@ function Kpi({ label, value, tone }: { label: string; value: string; tone?: "eve
     <div className="card">
       <p className="text-xs uppercase tracking-[0.14em] text-ink-soft">{label}</p>
       <p className={`tnum mt-2 font-display text-2xl font-semibold ${tone === "evergreen" ? "text-evergreen" : ""}`}>{value}</p>
+    </div>
+  );
+}
+
+/** Post-import payoff: shows the "AI did the work, you check the rest" split. */
+function ImportResult({ total, auto, review }: { total: number; auto: number; review: number }) {
+  const safeTotal = Math.max(total, 1);
+  const pct = Math.round((auto / safeTotal) * 100);
+  return (
+    <div className="mt-4 overflow-hidden rounded-2xl border border-evergreen/30 bg-evergreen/5">
+      <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
+        <div className="min-w-0">
+          <p className="font-display text-lg font-semibold">
+            Imported {total} transaction{total === 1 ? "" : "s"} — Mizan did {pct}% for you.
+          </p>
+          <p className="mt-1 text-sm text-ink-soft">
+            <span className="font-medium text-evergreen">{auto} auto-categorised by AI</span>
+            {review > 0 ? (
+              <>
+                {" "}· <span className="font-medium text-brass-deep">{review} flagged for your quick review</span>
+              </>
+            ) : (
+              <> · nothing needs your review</>
+            )}
+          </p>
+        </div>
+        {review > 0 ? (
+          <Link href="/app/books/review" className="btn-primary whitespace-nowrap">
+            Review {review} →
+          </Link>
+        ) : (
+          <Link href="/app/books/reports" className="btn-primary whitespace-nowrap">
+            See reports →
+          </Link>
+        )}
+      </div>
+      {/* visual 90/10 split: evergreen = AI auto-posted, brass = needs you */}
+      <div className="flex h-1.5 w-full" aria-hidden>
+        <div className="bg-evergreen" style={{ width: `${pct}%` }} />
+        <div className="bg-brass" style={{ width: `${100 - pct}%` }} />
+      </div>
     </div>
   );
 }

@@ -177,7 +177,7 @@ export async function importStatement(formData: FormData) {
   }
 
   revalidatePath(BOOKS, "layout");
-  redirect(`${BOOKS}?ok=Imported+${categorized.length}&review=${reviewCount}`);
+  redirect(`${BOOKS}?imported=${categorized.length}&auto=${postedCount}&review=${reviewCount}`);
 }
 
 // ─────────────────────────── Review actions ───────────────────────────
