@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useFormStatus } from "react-dom";
 import { parseCsv, guessMapping, type ColumnMap } from "@/lib/books/csv";
 import { importStatement } from "@/lib/books/actions";
 
@@ -10,6 +11,7 @@ export function ImportWizard() {
   const [headers, setHeaders] = useState<string[]>([]);
   const [preview, setPreview] = useState<Record<string, string>[]>([]);
   const [fileName, setFileName] = useState<string>("");
+  const [rowCount, setRowCount] = useState<number>(0);
   const [mode, setMode] = useState<Mode>("single");
   const [map, setMap] = useState<ColumnMap>({
     date: "",
@@ -29,6 +31,7 @@ export function ImportWizard() {
     const guess = guessMapping(headers);
     setHeaders(headers);
     setPreview(rows.slice(0, 5));
+    setRowCount(rows.length);
     setMap(guess);
     setMode(guess.amount ? "single" : "split");
   }
@@ -135,12 +138,54 @@ export function ImportWizard() {
           </div>
 
           <input type="hidden" name="mapping" value={JSON.stringify(finalMap)} />
-          <button type="submit" disabled={!ready} className="btn-primary disabled:opacity-40">
-            Import &amp; categorise
-          </button>
+          <SubmitBar ready={Boolean(ready)} rowCount={rowCount} />
         </>
       )}
     </form>
+  );
+}
+
+const IMPORT_STAGES = [
+  "Reading your statement…",
+  "Matching against your saved rules…",
+  "Categorising transactions…",
+  "Double-checking the low-confidence lines…",
+  "Posting to your ledger…",
+];
+
+function SubmitBar({ ready, rowCount }: { ready: boolean; rowCount: number }) {
+  const { pending } = useFormStatus();
+  const [stage, setStage] = useState(0);
+
+  useEffect(() => {
+    if (!pending) {
+      setStage(0);
+      return;
+    }
+    const id = setInterval(() => {
+      setStage((s) => Math.min(s + 1, IMPORT_STAGES.length - 1));
+    }, 850);
+    return () => clearInterval(id);
+  }, [pending]);
+
+  if (!pending) {
+    return (
+      <button type="submit" disabled={!ready} className="btn-primary disabled:opacity-40">
+        Import &amp; categorise
+      </button>
+    );
+  }
+
+  return (
+    <div className="space-y-2.5" role="status" aria-live="polite" aria-busy="true">
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-line/60">
+        <div className="mz-indeterminate h-full w-1/3 rounded-full bg-brass" />
+      </div>
+      <p className="text-sm text-ink-soft">
+        {IMPORT_STAGES[stage]}
+        {rowCount > 0 && <span className="text-ink-soft/70"> · {rowCount} rows</span>}
+      </p>
+    </div>
   );
 }
 

@@ -115,6 +115,13 @@ body {
 .rise-3 { animation-delay: 0.2s; }
 .rise-4 { animation-delay: 0.28s; }
 
+/* indeterminate import progress bar */
+@keyframes mzIndeterminate {
+  0%   { transform: translateX(-120%); }
+  100% { transform: translateX(360%); }
+}
+.mz-indeterminate { animation: mzIndeterminate 1.15s cubic-bezier(0.16, 1, 0.3, 1) infinite; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
   html { scroll-behavior: auto; }
