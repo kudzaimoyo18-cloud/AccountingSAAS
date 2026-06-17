@@ -2,6 +2,10 @@
 -- transactions, statement imports, vendor memory, tax packs, company members (tax-agent access)
 -- Safe to run on top of 0001. Paste into the Supabase SQL Editor and run once.
 
+-- can_access_company() forward-references company_members (created lower down).
+-- Postgres validates SQL function bodies at CREATE time, so defer that check.
+set check_function_bodies = off;
+
 -- ============ COMPANIES: region + VAT registration ============
 alter table public.companies
   add column if not exists region        text not null default 'ae'
