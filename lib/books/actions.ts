@@ -127,7 +127,7 @@ export async function importStatement(formData: FormData) {
   const { rows } = parseCsv(text);
   const lines = toLines(rows, mapping!).slice(0, MAX_IMPORT_ROWS);
   if (lines.length === 0) {
-    redirect(`${BOOKS}/import?error=No+rows+found+—+check+the+column+mapping`);
+    redirect(`${BOOKS}/import?error=No+rows+found+-+check+the+column+mapping`);
   }
 
   // Store the raw CSV for audit (best-effort; failure doesn't block import).

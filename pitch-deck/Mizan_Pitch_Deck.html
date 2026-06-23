@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mizan — Pitch Deck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F4ECDC;
+    --paper-2:#EFE4CF;
+    --ink:#211C15;
+    --ink-soft:#4A4133;
+    --muted:#7A6E57;
+    --brass:#B08227;
+    --brass-deep:#8A6420;
+    --line:rgba(33,28,21,.14);
+    --card:#FBF5E9;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  @page{ size:13.333in 7.5in; margin:0; }
+  html,body{ background:#cfc6b4; }
+  body{
+    font-family:"Inter",system-ui,Arial,sans-serif;
+    color:var(--ink);
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+  .slide{
+    position:relative;
+    width:1280px; height:720px;
+    background:var(--paper);
+    overflow:hidden;
+    page-break-after:always;
+    padding:74px 88px 70px;
+    display:flex; flex-direction:column;
+  }
+  .slide:last-child{ page-break-after:auto; }
+  .wm{ position:absolute; top:40px; left:88px; font-family:"Fraunces",serif; font-weight:600; letter-spacing:.04em; font-size:19px; color:var(--brass-deep); }
+  .wm .ar{ font-size:21px; margin-right:8px; }
+  .tag{ position:absolute; top:42px; right:88px; font-size:12.5px; letter-spacing:.13em; text-transform:uppercase; color:var(--muted); }
+  .pnum{ position:absolute; bottom:34px; right:88px; font-size:12.5px; color:var(--muted); letter-spacing:.08em; }
+  .foot{ position:absolute; bottom:34px; left:88px; font-size:12.5px; color:var(--muted); letter-spacing:.02em; }
+  .kicker{ font-size:14px; letter-spacing:.2em; text-transform:uppercase; color:var(--brass-deep); font-weight:600; margin-bottom:20px; }
+  h1{ font-family:"Fraunces",serif; font-weight:600; line-height:1.04; letter-spacing:-.01em; }
+  h2{ font-family:"Fraunces",serif; font-weight:600; font-size:50px; line-height:1.05; letter-spacing:-.01em; margin-bottom:30px; max-width:24ch; }
+  p{ line-height:1.5; }
+  .lead{ font-size:21px; color:var(--ink-soft); max-width:46ch; line-height:1.5; }
+  .grid{ display:grid; gap:22px; margin-top:8px; }
+  .g3{ grid-template-columns:repeat(3,1fr); }
+  .g2{ grid-template-columns:1.1fr .9fr; gap:40px; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:26px 26px 24px; }
+  .card h3{ font-family:"Fraunces",serif; font-weight:600; font-size:21px; margin-bottom:10px; color:var(--ink); }
+  .card p{ font-size:15.5px; color:var(--ink-soft); }
+  ul.clean{ list-style:none; display:flex; flex-direction:column; gap:16px; margin-top:6px; }
+  ul.clean li{ position:relative; padding-left:30px; font-size:18.5px; line-height:1.45; color:var(--ink-soft); max-width:50ch; }
+  ul.clean li::before{ content:""; position:absolute; left:2px; top:9px; width:11px; height:11px; border-radius:3px; background:var(--brass); transform:rotate(45deg); }
+  ul.clean li b{ color:var(--ink); font-weight:600; }
+  .pull{ margin-top:auto; font-family:"Fraunces",serif; font-style:italic; font-size:23px; color:var(--brass-deep); }
+  .big-line{ font-family:"Fraunces",serif; font-weight:600; font-size:40px; line-height:1.08; letter-spacing:-.01em; margin-top:26px; color:var(--ink); }
+  .row{ display:flex; gap:18px; flex-wrap:wrap; margin-top:6px; }
+  .step{ flex:1; min-width:0; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px 18px; position:relative; }
+  .step .n{ font-family:"Fraunces",serif; color:var(--brass); font-weight:700; font-size:15px; }
+  .step h4{ font-family:"Fraunces",serif; font-weight:600; font-size:17px; margin:8px 0 6px; }
+  .step p{ font-size:13.5px; color:var(--muted); line-height:1.4; }
+  .bar{ display:flex; height:46px; border-radius:10px; overflow:hidden; margin:24px 0 10px; border:1px solid var(--line); }
+  .bar .ai{ width:90%; background:var(--brass); color:#fff; display:flex; align-items:center; padding:0 18px; font-weight:600; font-size:15px; }
+  .bar .you{ width:10%; background:var(--paper-2); color:var(--ink); display:flex; align-items:center; justify-content:center; font-weight:600; font-size:13px; }
+  table{ border-collapse:collapse; width:100%; margin-top:10px; }
+  th,td{ text-align:left; padding:14px 16px; font-size:15px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th{ font-size:12.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); font-weight:600; }
+  td b{ color:var(--ink); }
+  .mz td:last-child{ color:var(--brass-deep); font-weight:600; }
+  .price{ display:flex; gap:16px; margin-top:6px; }
+  .tier{ flex:1; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:22px 20px; }
+  .tier.pop{ border-color:var(--brass); box-shadow:0 0 0 1px var(--brass) inset; }
+  .tier .nm{ font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+  .tier .amt{ font-family:"Fraunces",serif; font-weight:600; font-size:30px; margin:8px 0 2px; }
+  .tier .amt small{ font-size:14px; color:var(--muted); font-weight:400; }
+  .tier .pp{ font-size:13px; color:var(--brass-deep); font-weight:600; margin-top:6px; }
+  .note{ font-size:12.5px; color:var(--muted); margin-top:16px; font-style:italic; }
+  .cover{ justify-content:center; }
+  .cover .scale{ position:absolute; right:90px; top:50%; transform:translateY(-50%); opacity:.9; }
+  .cover h1{ font-size:78px; max-width:15ch; }
+  .cover .sub{ font-family:"Fraunces",serif; font-style:italic; font-size:30px; color:var(--brass-deep); margin-top:22px; }
+  .cover .meta{ margin-top:40px; font-size:16px; color:var(--ink-soft); line-height:1.7; }
+  .closelg{ font-family:"Fraunces",serif; font-weight:600; font-size:56px; line-height:1.08; max-width:18ch; letter-spacing:-.01em; }
+  .twocol{ display:grid; grid-template-columns:1fr 1fr; gap:18px 40px; margin-top:6px; }
+  .stat{ font-family:"Fraunces",serif; font-weight:600; font-size:30px; color:var(--brass-deep); }
+  .stat small{ display:block; font-family:"Inter",sans-serif; font-weight:400; font-size:14px; color:var(--muted); margin-top:4px; letter-spacing:0; }
+</style>
+</head>
+<body>
+
+<!-- 1 COVER -->
+<section class="slide cover">
+  <div class="wm"><span class="ar">ميزان</span>MIZAN</div>
+  <div class="tag">Hub71+ AI · Access Programme</div>
+  <svg class="scale" width="300" height="320" viewBox="0 0 300 320" fill="none">
+    <g stroke="#B08227" stroke-width="3" stroke-linecap="round">
+      <line x1="150" y1="40" x2="150" y2="250"/>
+      <line x1="60" y1="80" x2="240" y2="80"/>
+      <line x1="100" y1="250" x2="200" y2="250"/>
+      <path d="M60 80 L30 150 A40 22 0 0 0 90 150 Z" fill="#B08227" fill-opacity="0.12"/>
+      <path d="M240 80 L210 150 A40 22 0 0 0 270 150 Z" fill="#B08227" fill-opacity="0.12"/>
+      <line x1="60" y1="80" x2="30" y2="150"/><line x1="60" y1="80" x2="90" y2="150"/>
+      <line x1="240" y1="80" x2="210" y2="150"/><line x1="240" y1="80" x2="270" y2="150"/>
+      <circle cx="150" cy="40" r="7" fill="#B08227"/>
+    </g>
+  </svg>
+  <h1>AI bookkeeping for the UAE's new tax era.</h1>
+  <div class="sub">Replaces your bookkeeper, not your accountant.</div>
+  <div class="meta">
+    Knievel Kudzai Moyo · Founder &amp; CEO · Dubai, UAE<br>
+    mizan-tan.vercel.app · kudzaimoyo18@gmail.com
+  </div>
+  <div class="foot">Pitch deck · 2026</div>
+</section>
+
+<!-- 2 PROBLEM -->
+<section class="slide">
+  <div class="wm"><span class="ar">ميزان</span>MIZAN</div>
+  <div class="kicker">The problem</div>
+  <h2>Every UAE SME just became a taxpayer — overnight.</h2>
+  <ul class="clean">
+    <li>Since <b>1 June 2023</b>, the UAE charges <b>9% corporate tax</b> on profit above AED 375k — on top of 5% VAT.</li>
+    <li>Even <b>0%-rated free-zone companies must register, keep IFRS books and file</b>. The paperwork has no exemption.</li>
+    <li><b>Small Business Relief ends 31 Dec 2026.</b> The grace period is closing on every SME.</li>
+    <li>Miss registration and it's an <b>AED 10,000 penalty</b> — and it accumulates.</li>
+    <li>Yet most expat-owned free-zone SMEs have <b>no finance team, informal books, and can't afford</b> a AED 2k–5k/mo bookkeeper.</li>
+  </ul>
+  <div class="pull">"Poor bookkeeping doesn't lower your tax — it raises it."</div>
+  <div class="pnum">02</div>
+</section>
+
+<!-- 3 SOLUTION -->
+<section class="slide">
+  <div class="wm"><span class="ar">ميزان</span>MIZAN</div>
+  <div class="kicker">The solution</div>
+  <h2>Mizan does the bookkeeping. You just confirm.</h2>
+  <ul class="clean">
+    <li>Connect a bank and upload invoices — AI <b>imports, categorises and reconciles</b> every transaction.</li>
+    <li>The magic moment: <b>~90% auto-categorised</b>, only <b>~10% flagged</b> for a human glance.</li>
+    <li>Live <b>management reporting</b> — P&amp;L and a real-time VAT / corporate-tax position.</li>
+    <li>Then it <b>bridges to a partnered, licensed FTA tax agent</b> who reviews and files.</li>
+  </ul>
+  <div class="big-line">Replaces your bookkeeper,<br>not your accountant.</div>
+  <div class="pnum">03</div>
+</section>
+
+<!-- 4 PRODUCT -->
+<section class="slide">
+  <div class="wm"><span class="ar">ميزان</span>MIZAN</div>
+  <div class="kicker">How it works</div>
+  <h2 style="margin-bottom:14px">Record → file, on autopilot.</h2>
+  <div class="row">
+    <div class="step"><div class="n">01</div><h4>Connect</h4><p>Link bank feeds &amp; drop invoices (PDF / photo).</p></div>
+    <div class="step"><div class="n">02</div><h4>Import</h4><p>OCR + ingestion reads messy AR/EN documents.</p></div>
+    <div class="step"><div class="n">03</div><h4>AI categorise</h4><p>LLM engine codes &amp; reconciles each line.</p></div>
+    <div class="step"><div class="n">04</div><h4>You review 10%</h4><p>Confirm the flagged exceptions in minutes.</p></div>
+    <div class="step"><div class="n">05</div><h4>Report &amp; file</h4><p>P&amp;L / VAT out; handoff to licensed agent.</p></div>
+  </div>
+  <div class="bar"><div class="ai">AI does ~90% — import, categorise, reconcile</div><div class="you">You · 10%</div></div>
+  <p class="note">The post-import split is shown to the owner as a 90 / 10 bar — the product's core "magic moment".</p>
+  <div class="pnum">04</div>
+</section>
+
+<!-- 5 WHY NOW -->
+<section class="slide">
+  <div class="wm"><span class="ar">ميزان</span>MIZAN</div>
+  <div class="kicker">Why now</div>
+  <h2>A regulatory deadline meets an AI that can finally do the work.</h2>
+  <div class="grid g3">
+    <div class="card"><h3>Regulation</h3><p>9% corporate tax live since 2023; Small Business Relief sunsets end-2026. Compliance is now mandatory, not optional — a hard forcing function.</p></div>
+    <div class="card"><h3>Technology</h3><p>LLMs only just became reliable enough to read messy bank statements and mixed Arabic/English invoices at near-human accuracy. "90% / 10%" is now real.</p></div>
+    <div class="card"><h3>Market</h3><p>Record new-company formation in Abu Dhabi &amp; MENA. Greenfield, expat-owned SMEs have no incumbent accountant to displace — they want a first solution.</p></div>
+  </div>
+  <div class="pull" style="font-size:20px">Window: the next 18–24 months, before incumbents ship credible AI bookkeeping.</div>
+  <div class="pnum">05</div>
+</section>
+
+<!-- 6 MARKET -->
+<section class="slide">
+  <div class="wm"><span class="ar">ميزان</span>MIZAN</div>
+  <div class="kicker">Market</div>
+  <h2>A whole market forced into the books at once.</h2>
+  <div class="grid g2">
+    <ul class="clean">
+      <li><b>TAM</b> — every UAE company now in scope of corporate tax. SMEs are <b>~94% of all UAE businesses.</b></li>
+      <li><b>SAM</b> — expat-owned <b>free-zone SMEs</b>: greenfield, no finance function. Our beachhead.</li>
+      <li><b>SOM (Yr 1–2)</b> — first Abu Dhabi free-zone cohorts + converted waitlist.</li>
+      <li><b>Expansion</b> — UK <b>Making Tax Digital</b>: same engine, swappable region adapter.</li>
+    </ul>
+    <div>
+      <div class="card" style="margin-bottom:16px"><div class="stat">9%<small>Corporate tax on profit &gt; AED 375k (live since Jun 2023)</small></div></div>
+      <div class="card" style="margin-bottom:16px"><div class="stat">AED 10,000<small>Penalty for a single late registration — and it stacks</small></div></div>
+      <div class="card"><div class="stat">Dec 2026<small>Small Business Relief expires — deadline pressure peaks</small></div></div>
+    </div>
+  </div>
+  <p class="note">Market figures directional — to be firmed with FTA / free-zone registry data.</p>
+  <div class="pnum">06</div>
+</section>
+
+<!-- 7 BUSINESS MODEL -->
+<section class="slide">
+  <div class="wm"><span class="ar">ميزان</span>MIZAN</div>
+  <div class="kicker">Business model</div>
+  <h2 style="margin-bottom:18px">Self-serve SaaS, plus a filing rev-share.</h2>
+  <div class="price">
+    <div class="tier"><div class="nm">Starter</div><div class="amt">AED 349<small>/mo</small></div></div>
+    <div class="tier pop"><div class="nm">Growth</div><div class="amt">AED 999<small>/mo</small></div><div class="pp">Most popular</div></div>
+    <div class="tier"><div class="nm">Pro</div><div class="amt">AED 2,900<small>/mo</small></div></div>
+  </div>
+  <ul class="clean" style="margin-top:22px">
+    <li>One-time setup AED 1,500 (waived on Growth / Pro). <b>First 50 customers: free setup + locked founding price.</b></li>
+    <li><b>Revenue share</b> with the licensed FTA tax-agent partner on each regulated filing.</li>
+    <li>Land <b>direct self-serve</b> (owner drives the app) → expand to <b>white-label for firms</b> later.</li>
+    <li>UK tier in GBP (39 / 79 / 149) — second region, same product.</li>
+  </ul>
+  <div class="pnum">07</div>
+</section>
+
+<!-- 8 COMPETITION -->
+<section class="slide">
+  <div class="wm"><span class="ar">ميزان</span>MIZAN</div>
+  <div class="kicker">Competition</div>
+  <h2>Tools make you do it. Firms charge a fortune. Mizan does both.</h2>
+  <table class="mz">
+    <tr><th>Who</th><th>What they give</th><th>The gap</th></tr>
+    <tr><td><b>Zoho Books · QuickBooks · Xero</b></td><td>Cheap DIY ledgers</td><td>You're still the bookkeeper; no UAE filing bridge</td></tr>
+    <tr><td><b>Traditional accounting firms</b></td><td>Do the work &amp; file</td><td>Expensive, slow, not self-serve</td></tr>
+    <tr><td><b>Mizan</b></td><td>AI does the bookkeeping</td><td>Self-serve + AI does 90% + bridge to licensed filing</td></tr>
+  </table>
+  <div class="pull" style="font-size:21px">We own recording &amp; light reporting; humans keep advisory &amp; the signature.</div>
+  <div class="pnum">08</div>
+</section>
+
+<!-- 9 TRACTION -->
+<section class="slide">
+  <div class="wm"><span class="ar">ميزان</span>MIZAN</div>
+  <div class="kicker">Traction</div>
+  <h2>Shipped, live, and bootstrapped.</h2>
+  <ul class="clean">
+    <li><b>Product v0.1 live</b> — marketing site + waitlist, magic-link / Google auth, client portal (onboarding, dashboard, documents, settings) and admin (client list + compliance CRUD).</li>
+    <li><b>Two regions live</b> — UAE and UK landing pages, region-tagged waitlist.</li>
+    <li><b>GTM in motion</b> — founder talking-head Reels with A/B-tested hooks driving waitlist.</li>
+    <li><b>Capital-efficient</b> — built solo, end-to-end, on a bootstrap budget.</li>
+  </ul>
+  <div class="pull" style="font-size:20px">Stage: post-launch, pre-revenue — converting the waitlist into paid pilots.</div>
+  <div class="pnum">09</div>
+</section>
+
+<!-- 10 TEAM -->
+<section class="slide">
+  <div class="wm"><span class="ar">ميزان</span>MIZAN</div>
+  <div class="kicker">Team</div>
+  <h2 style="margin-bottom:22px">Built by a founder who lives in the market.</h2>
+  <div class="grid g2">
+    <div class="card">
+      <h3>Knievel Kudzai Moyo — Founder &amp; CEO</h3>
+      <p style="font-size:16px">Zimbabwean, based in Dubai. Commercial / business-development founder. Validated the demand first-hand and shipped a working v0.1 MVP using modern AI build tooling — now bringing on a technical lead to own the engineering. LinkedIn: /in/knievel-moyo-kudzai-553091304</p>
+    </div>
+    <ul class="clean" style="margin-top:0">
+      <li><b>Founder–market fit</b> — lives in the exact UAE SME market; BD background = distribution edge.</li>
+      <li><b>Validated, not just planned</b> — shipped a working MVP &amp; waitlist with AI tooling, bootstrapped.</li>
+      <li><b>Hiring the gap</b> — adding a technical co-founder / lead to own the AI engine.</li>
+    </ul>
+  </div>
+  <div class="pnum">10</div>
+</section>
+
+<!-- 11 FUNDRAISING -->
+<section class="slide">
+  <div class="wm"><span class="ar">ميزان</span>MIZAN</div>
+  <div class="kicker">Fundraising</div>
+  <h2>Bootstrapped to product. Raising to scale.</h2>
+  <div class="grid g2">
+    <div class="card">
+      <h3>To date</h3>
+      <p style="font-size:16px"><b>Bootstrapped</b> — AED 0 external capital. Full product, two regions and GTM content shipped on founder budget.</p>
+    </div>
+    <div class="card">
+      <h3>Raising — Pre-seed</h3>
+      <p style="font-size:16px">Use of funds: (1) bring on a technical lead and harden the AI engine on real UAE data, (2) convert waitlist → paying pilots, (3) sign the FTA-agent filing partner, (4) Abu Dhabi market entry via Hub71.</p>
+    </div>
+  </div>
+  <p class="note">Hub71 Access incentive: AED 250k in-kind + AED 250k cash (SAFE) — directly funds the next 12 months.</p>
+  <div class="pnum">11</div>
+</section>
+
+<!-- 12 PLANS HUB71 -->
+<section class="slide">
+  <div class="wm"><span class="ar">ميزان</span>MIZAN</div>
+  <div class="kicker">Plans for Abu Dhabi &amp; Hub71</div>
+  <h2 style="margin-bottom:18px">First 90 days at Hub71.</h2>
+  <div class="grid g2" style="gap:22px 40px">
+    <div class="card"><h3>1 · Engine + hire</h3><p style="font-size:15.5px">Add a technical lead and use Hub71+ AI compute / partner access to push auto-categorisation past 90% on real UAE bank &amp; invoice data.</p></div>
+    <div class="card"><h3>2 · Pilots</h3><p style="font-size:15.5px">Convert the waitlist into a first Abu Dhabi free-zone pilot cohort; operationalise the human-in-the-loop review.</p></div>
+    <div class="card"><h3>3 · Compliance</h3><p style="font-size:15.5px">Use proximity to ADGM &amp; government partners to formalise the "software + licensed FTA agent" filing model.</p></div>
+    <div class="card"><h3>4 · Capital</h3><p style="font-size:15.5px">Open pre-seed conversations through Hub71's investor network; test bank / free-zone partner channels.</p></div>
+  </div>
+  <div class="pull" style="font-size:18px">Outcome by month 3: live AD pilot cohort · signed filing partner · metrics-backed Demo Day story.</div>
+  <div class="pnum">12</div>
+</section>
+
+<!-- 13 CLOSE -->
+<section class="slide cover">
+  <div class="wm"><span class="ar">ميزان</span>MIZAN</div>
+  <div class="closelg">Clean books, on autopilot —<br>ready to file.</div>
+  <div class="sub" style="margin-top:24px">Let's build the UAE's AI bookkeeper from Abu Dhabi.</div>
+  <div class="meta">
+    Knievel Kudzai Moyo · Founder &amp; CEO<br>
+    mizan-tan.vercel.app · kudzaimoyo18@gmail.com · LinkedIn /in/knievel-moyo-kudzai-553091304
+  </div>
+  <div class="pnum">13</div>
+</section>
+
+</body>
+</html>

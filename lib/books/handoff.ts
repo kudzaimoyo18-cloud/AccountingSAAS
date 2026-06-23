@@ -45,7 +45,7 @@ export async function generateTaxPack() {
   }
 
   revalidatePath(CLOSE);
-  redirect(`${CLOSE}?ok=Period+closed+—+pack+ready+to+download`);
+  redirect(`${CLOSE}?ok=Period+closed+-+pack+ready+to+download`);
 }
 
 /** Invite a tax agent (or accountant) to view the books. */
