@@ -8,6 +8,9 @@ const STYLES: Record<string, string> = {
   active: "bg-evergreen/10 text-evergreen",
   onboarding: "bg-brass/10 text-brass-deep",
   paused: "bg-paper-dim text-ink-soft",
+  draft: "bg-paper-dim text-ink-soft",
+  reviewed: "bg-brass/10 text-brass-deep",
+  approved: "bg-evergreen/10 text-evergreen",
 };
 
 const LABELS: Record<string, string> = {
@@ -20,6 +23,9 @@ const LABELS: Record<string, string> = {
   active: "Active",
   onboarding: "Onboarding",
   paused: "Paused",
+  draft: "AI draft",
+  reviewed: "Reviewed",
+  approved: "Approved",
 };
 
 export function StatusBadge({ status }: { status: string }) {
