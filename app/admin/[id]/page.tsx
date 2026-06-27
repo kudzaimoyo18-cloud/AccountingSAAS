@@ -60,6 +60,9 @@ export default async function AdminCompanyPage({
           <Link href={`/admin/${company.id}/ledger`} className="btn-primary px-3 py-1.5 text-xs">
             Open AI ledger
           </Link>
+          <Link href={`/admin/${company.id}/reports`} className="btn-ghost px-3 py-1.5 text-xs">
+            Statements
+          </Link>
           <StatusBadge status={company.status} />
           <form action={setCompanyStatus} className="flex items-center gap-2">
             <input type="hidden" name="company_id" value={company.id} />
