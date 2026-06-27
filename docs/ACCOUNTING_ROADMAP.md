@@ -57,20 +57,23 @@ documents ──AI──▶ ledger_entries (draft → reviewed → approved)   [
   earnings). Pure aggregation over journal lines. Rendered at
   `/admin/[id]/reports`.
 
-### Phase 4 — Bank import & reconciliation (next)
-- `bank_transactions` (CSV / statement import) + reconciliation matches.
-- AI matches bank lines to journal entries; flags unreconciled items.
-- Delivers the Pro-tier "audit-ready records" promise.
+### Phase 4 — Bank import & reconciliation ✅
+- `bank_transactions` (CSV import) + reconciliation matches.
+- Deterministic auto-match (gross amount + date within 7 days) plus manual
+  match / unmatch; flags unreconciled items.
+- Delivers the Pro-tier "audit-ready records" promise. Rendered at
+  `/admin/[id]/bank`.
 
-### Phase 5 — Period close & tax computation (next)
-- `accounting_periods` (lockable) + adjusting entries (accruals, depreciation,
-  prepayments).
+### Phase 5 — Period close & tax computation ✅
+- `accounting_periods` snapshot on close.
 - **VAT return**: output − input VAT per period (from `2100`/`1200` accounts).
-- **Corporate tax**: 9% on taxable profit above AED 375,000, with free-zone
-  qualifying-income handling.
-- Closing a period generates a filing draft into `compliance_items` for the
-  licensed agent to review.
+- **Corporate tax**: 9% on taxable profit above AED 375,000; free-zone
+  qualifying-income (0%) surfaced as a review note.
+- Closing a period snapshots the figures and drafts `vat_return` +
+  `corporate_tax` filings into `compliance_items` for the licensed agent to
+  review. Rendered at `/admin/[id]/tax`.
 
 ## Status
-- Phases 1–3: implemented (this commit).
-- Phases 4–5: planned. See migrations `0003_accounts.sql`, `0004_journals.sql`.
+- Phases 1–5: implemented. Migrations `0003`–`0006`.
+- Future refinements: AI-assisted fuzzy bank matching, adjusting entries
+  (accruals/depreciation), and hard period-locking that blocks back-posting.

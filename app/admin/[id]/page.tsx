@@ -63,6 +63,12 @@ export default async function AdminCompanyPage({
           <Link href={`/admin/${company.id}/reports`} className="btn-ghost px-3 py-1.5 text-xs">
             Statements
           </Link>
+          <Link href={`/admin/${company.id}/bank`} className="btn-ghost px-3 py-1.5 text-xs">
+            Bank
+          </Link>
+          <Link href={`/admin/${company.id}/tax`} className="btn-ghost px-3 py-1.5 text-xs">
+            VAT &amp; tax
+          </Link>
           <StatusBadge status={company.status} />
           <form action={setCompanyStatus} className="flex items-center gap-2">
             <input type="hidden" name="company_id" value={company.id} />
