@@ -87,8 +87,10 @@ export function accountCodeFor(
 export type PostingLine = { code: string; debit: number; credit: number };
 
 // Turns one (approved) ledger entry into a balanced set of journal lines.
-// Accrual basis: the counter-account is Payables (expense) or Receivables
-// (income). A reviewer can re-point these later (e.g. to Bank for cash basis).
+// Cash basis: the counter-account is Bank — income/expense hits the books when
+// the money moves, matching what a self-serve owner sees in their bank account.
+//   Expense: Dr expense (net) + Dr VAT Input (vat)  →  Cr Bank (gross)
+//   Income:  Dr Bank (gross)  →  Cr income (net) + Cr VAT Output (vat)
 export function postingLinesFor(entry: {
   direction: "income" | "expense";
   category: string;
@@ -103,12 +105,12 @@ export function postingLinesFor(entry: {
   if (entry.direction === "expense") {
     const lines: PostingLine[] = [{ code: acct, debit: net, credit: 0 }];
     if (vat > 0) lines.push({ code: ACC.vatInput, debit: vat, credit: 0 });
-    lines.push({ code: ACC.payable, debit: 0, credit: gross });
+    lines.push({ code: ACC.bank, debit: 0, credit: gross });
     return lines;
   }
 
   // income
-  const lines: PostingLine[] = [{ code: ACC.receivable, debit: gross, credit: 0 }];
+  const lines: PostingLine[] = [{ code: ACC.bank, debit: gross, credit: 0 }];
   lines.push({ code: acct, debit: 0, credit: net });
   if (vat > 0) lines.push({ code: ACC.vatOutput, debit: 0, credit: vat });
   return lines;

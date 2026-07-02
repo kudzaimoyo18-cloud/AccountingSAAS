@@ -10,6 +10,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getActiveCompany } from "@/lib/books/repo";
+import { syncJournalForEntry } from "@/lib/books/posting";
 import {
   extractLedgerEntries,
   isExtractable,
@@ -164,8 +165,10 @@ export async function updateLedgerEntry(formData: FormData) {
     .eq("company_id", company.id);
 
   if (error) console.error("[books/updateLedgerEntry]", error.message);
+  else await syncJournalForEntry(supabase, company.id, id);
 
   revalidatePath(LEDGER);
+  revalidatePath("/app/reports");
   redirect(LEDGER);
 }
 
@@ -186,8 +189,10 @@ export async function setLedgerStatus(formData: FormData) {
     .eq("company_id", company.id);
 
   if (error) console.error("[books/setLedgerStatus]", error.message);
+  else await syncJournalForEntry(supabase, company.id, id);
 
   revalidatePath(LEDGER);
+  revalidatePath("/app/reports");
   redirect(LEDGER);
 }
 
@@ -243,5 +248,6 @@ export async function deleteLedgerEntry(formData: FormData) {
   if (error) console.error("[books/deleteLedgerEntry]", error.message);
 
   revalidatePath(LEDGER);
+  revalidatePath("/app/reports");
   redirect(LEDGER);
 }
