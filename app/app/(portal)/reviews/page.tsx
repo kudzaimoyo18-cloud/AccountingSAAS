@@ -1,9 +1,6 @@
 import { redirect } from "next/navigation";
-import { PortalShell } from "@/components/PortalShell";
-import { BooksTabs } from "@/components/books/BooksTabs";
 import { CategoryBadge, ConfidenceMeter } from "@/components/books/ui";
 import { ControlNotice } from "@/components/books/ControlNotice";
-import { getProfile } from "@/lib/portal";
 import { getActiveCompany, listTransactions } from "@/lib/books/repo";
 import { approveTransaction, reassignTransaction } from "@/lib/books/actions";
 import { money, shortDate } from "@/lib/demo/format";
@@ -12,7 +9,6 @@ import { selectableAccounts } from "@/lib/demo/coa";
 export const metadata = { title: "Review — Mizan Books" };
 
 export default async function ReviewPage() {
-  const { profile } = await getProfile();
   const company = await getActiveCompany();
   if (!company) redirect("/app/onboarding");
 
@@ -21,18 +17,13 @@ export default async function ReviewPage() {
   const accounts = selectableAccounts(company.region);
 
   return (
-    <PortalShell active="/app/books" isAdmin={profile?.role === "admin"}>
-      <div className="mx-auto max-w-5xl">
+    <div className="mx-auto max-w-5xl">
         <p className="eyebrow">Human-in-the-loop</p>
         <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">Review queue</h1>
         <p className="mt-1 max-w-xl text-sm text-ink-soft">
           Mizan posts everything it&apos;s confident about and surfaces only the edge cases. Approve the
           suggestion or re-assign — and Mizan remembers the choice for next time.
         </p>
-
-        <div className="mt-6">
-          <BooksTabs active="review" reviewCount={queue.length} />
-        </div>
 
         <ControlNotice className="mt-6" />
 
@@ -97,6 +88,5 @@ export default async function ReviewPage() {
           </div>
         )}
       </div>
-    </PortalShell>
   );
 }

@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { PortalShell } from "@/components/PortalShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { getCompany } from "@/lib/portal";
 
@@ -14,7 +13,7 @@ const KIND_LABELS: Record<string, string> = {
 };
 
 export default async function DashboardPage() {
-  const { supabase, profile, company } = await getCompany();
+  const { supabase, company } = await getCompany();
   if (!company) redirect("/app/onboarding");
 
   const [{ data: items }, { count: docCount }] = await Promise.all([
@@ -34,8 +33,7 @@ export default async function DashboardPage() {
   const nextDue = open.find((i) => i.due_date);
 
   return (
-    <PortalShell active="/app" isAdmin={profile?.role === "admin"}>
-      <div className="mx-auto max-w-4xl">
+    <div className="mx-auto max-w-4xl">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="font-display text-3xl font-semibold tracking-tight">
@@ -105,6 +103,5 @@ export default async function DashboardPage() {
           </ul>
         )}
       </div>
-    </PortalShell>
   );
 }

@@ -1,19 +1,17 @@
 import { redirect } from "next/navigation";
-import { PortalShell } from "@/components/PortalShell";
 import { getCompany } from "@/lib/portal";
 import { TIERS } from "@/lib/content";
 
 export const metadata = { title: "Settings — Mizan" };
 
 export default async function SettingsPage() {
-  const { user, profile, company } = await getCompany();
+  const { user, company } = await getCompany();
   if (!company) redirect("/app/onboarding");
 
   const tier = TIERS.find((t) => t.id === company.plan);
 
   return (
-    <PortalShell active="/app/settings" isAdmin={profile?.role === "admin"}>
-      <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-2xl">
         <h1 className="font-display text-3xl font-semibold tracking-tight">Settings</h1>
 
         <div className="card mt-8">
@@ -58,6 +56,5 @@ export default async function SettingsPage() {
           </p>
         </div>
       </div>
-    </PortalShell>
   );
 }

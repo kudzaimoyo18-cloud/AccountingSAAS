@@ -1,9 +1,7 @@
 import { redirect } from "next/navigation";
-import { PortalShell } from "@/components/PortalShell";
 import { BooksTabs } from "@/components/books/BooksTabs";
 import { ImportWizard } from "@/components/books/ImportWizard";
 import { ControlNotice } from "@/components/books/ControlNotice";
-import { getProfile } from "@/lib/portal";
 import { getActiveCompany, listTransactions } from "@/lib/books/repo";
 
 export const metadata = { title: "Import — Mizan Books" };
@@ -13,7 +11,6 @@ export default async function ImportPage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
-  const { profile } = await getProfile();
   const company = await getActiveCompany();
   if (!company) redirect("/app/onboarding");
 
@@ -22,8 +19,7 @@ export default async function ImportPage({
   const reviewCount = txns.filter((t) => t.status === "review").length;
 
   return (
-    <PortalShell active="/app/books" isAdmin={profile?.role === "admin"}>
-      <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-3xl">
         <p className="eyebrow">Import</p>
         <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">Import a bank statement</h1>
         <p className="mt-1 text-sm text-ink-soft">
@@ -43,6 +39,5 @@ export default async function ImportPage({
         <ImportWizard />
         <ControlNotice className="mt-6" />
       </div>
-    </PortalShell>
   );
 }

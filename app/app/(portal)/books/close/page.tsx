@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { PortalShell } from "@/components/PortalShell";
 import { BooksTabs } from "@/components/books/BooksTabs";
-import { getProfile } from "@/lib/portal";
 import { createClient } from "@/lib/supabase/server";
 import { getActiveCompany, listTransactions } from "@/lib/books/repo";
 import { buildReports } from "@/lib/books/reports";
@@ -31,7 +29,6 @@ export default async function ClosePage({
 }: {
   searchParams: Promise<{ ok?: string; error?: string }>;
 }) {
-  const { profile } = await getProfile();
   const company = await getActiveCompany();
   if (!company) redirect("/app/onboarding");
 
@@ -62,8 +59,7 @@ export default async function ClosePage({
       : "No posted transactions yet";
 
   return (
-    <PortalShell active="/app/books" isAdmin={profile?.role === "admin"}>
-      <div className="mx-auto max-w-5xl">
+    <div className="mx-auto max-w-5xl">
         <p className="eyebrow">Period close</p>
         <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">Close &amp; hand off</h1>
         <p className="mt-1 text-sm text-ink-soft">{period}</p>
@@ -103,7 +99,7 @@ export default async function ClosePage({
             </dl>
             <div className="mt-5 flex flex-wrap gap-2">
               <a href="/app/books/pack" className="btn-primary">Download Excel pack</a>
-              <Link href="/app/books/reports/print" className="btn-ghost">Print / PDF</Link>
+              <Link href="/app/reports/print" className="btn-ghost">Print / PDF</Link>
             </div>
             <form action={generateTaxPack} className="mt-3">
               <button type="submit" className="text-sm font-medium text-brass-deep hover:underline">
@@ -190,7 +186,6 @@ export default async function ClosePage({
           </div>
         )}
       </div>
-    </PortalShell>
   );
 }
 

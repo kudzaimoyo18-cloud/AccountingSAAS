@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { PortalShell } from "@/components/PortalShell";
 import { BooksTabs } from "@/components/books/BooksTabs";
 import { StatusBadge } from "@/components/StatusBadge";
-import { getProfile } from "@/lib/portal";
 import { getActiveCompany } from "@/lib/books/repo";
 import { createClient } from "@/lib/supabase/server";
 import { LEDGER_CATEGORIES } from "@/lib/ai";
@@ -60,7 +58,6 @@ export default async function BooksLedgerPage({
 }: {
   searchParams: Promise<{ error?: string; ok?: string }>;
 }) {
-  const { profile } = await getProfile();
   const company = await getActiveCompany();
   if (!company) redirect("/app/onboarding");
 
@@ -96,8 +93,7 @@ export default async function BooksLedgerPage({
   const vatPaid = sum(expense, "vat_amount");
 
   return (
-    <PortalShell active="/app/books" isAdmin={profile?.role === "admin"}>
-      <div className="mx-auto max-w-6xl">
+    <div className="mx-auto max-w-6xl">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="font-display text-3xl font-semibold tracking-tight">
@@ -427,6 +423,5 @@ export default async function BooksLedgerPage({
           agent.
         </p>
       </div>
-    </PortalShell>
   );
 }

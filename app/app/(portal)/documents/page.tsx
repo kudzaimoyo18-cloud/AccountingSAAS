@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { PortalShell } from "@/components/PortalShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { uploadDocument } from "@/lib/actions";
 import { getCompany } from "@/lib/portal";
@@ -18,7 +17,7 @@ export default async function DocumentsPage({
 }: {
   searchParams: Promise<{ error?: string; ok?: string }>;
 }) {
-  const { supabase, profile, company } = await getCompany();
+  const { supabase, company } = await getCompany();
   if (!company) redirect("/app/onboarding");
   const { error, ok } = await searchParams;
 
@@ -29,8 +28,7 @@ export default async function DocumentsPage({
     .order("created_at", { ascending: false });
 
   return (
-    <PortalShell active="/app/documents" isAdmin={profile?.role === "admin"}>
-      <div className="mx-auto max-w-4xl">
+    <div className="mx-auto max-w-4xl">
         <h1 className="font-display text-3xl font-semibold tracking-tight">Documents</h1>
         <p className="mt-1 text-sm text-ink-soft">
           Invoices, receipts, bank statements — drop them here, we do the rest.
@@ -81,6 +79,5 @@ export default async function DocumentsPage({
           </ul>
         )}
       </div>
-    </PortalShell>
   );
 }

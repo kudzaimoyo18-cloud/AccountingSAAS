@@ -1,8 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { PortalShell } from "@/components/PortalShell";
-import { BooksTabs } from "@/components/books/BooksTabs";
-import { getProfile } from "@/lib/portal";
 import { getActiveCompany, listTransactions } from "@/lib/books/repo";
 import { buildReports } from "@/lib/books/reports";
 import { money, longDate } from "@/lib/demo/format";
@@ -11,7 +8,6 @@ import { REGIONS } from "@/lib/demo/regions";
 export const metadata = { title: "Reports — Mizan Books" };
 
 export default async function ReportsPage() {
-  const { profile } = await getProfile();
   const company = await getActiveCompany();
   if (!company) redirect("/app/onboarding");
 
@@ -24,8 +20,7 @@ export default async function ReportsPage() {
       : "No posted transactions yet";
 
   return (
-    <PortalShell active="/app/books" isAdmin={profile?.role === "admin"}>
-      <div className="mx-auto max-w-5xl">
+    <div className="mx-auto max-w-5xl">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="eyebrow">Filing-ready · {cfg.filingAuthority}</p>
@@ -33,13 +28,9 @@ export default async function ReportsPage() {
             <p className="mt-1 text-sm text-ink-soft">{period}</p>
           </div>
           <div className="flex gap-2">
-            <Link href="/app/books/reports/print" className="btn-ghost">Print / PDF</Link>
+            <Link href="/app/reports/print" className="btn-ghost">Print / PDF</Link>
             <Link href="/app/books/close" className="btn-primary">Close &amp; hand off</Link>
           </div>
-        </div>
-
-        <div className="mt-6">
-          <BooksTabs active="reports" reviewCount={reports.reviewCount} />
         </div>
 
         {reports.reviewCount > 0 && (
@@ -116,7 +107,6 @@ export default async function ReportsPage() {
           </div>
         </div>
       </div>
-    </PortalShell>
   );
 }
 
