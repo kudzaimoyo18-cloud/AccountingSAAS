@@ -1,17 +1,15 @@
 import Link from "next/link";
 
-export type BooksTab = "overview" | "ledger" | "review" | "reports" | "import" | "close";
+export type BooksTab = "overview" | "ledger" | "import" | "close";
 
 const TABS: { key: BooksTab; label: string; href: string }[] = [
   { key: "overview", label: "Overview", href: "/app/books" },
   { key: "ledger", label: "Ledger", href: "/app/books/ledger" },
-  { key: "review", label: "Review", href: "/app/books/review" },
-  { key: "reports", label: "Reports", href: "/app/books/reports" },
   { key: "import", label: "Import", href: "/app/books/import" },
   { key: "close", label: "Close & hand off", href: "/app/books/close" },
 ];
 
-export function BooksTabs({ active, reviewCount = 0 }: { active: BooksTab; reviewCount?: number }) {
+export function BooksTabs({ active }: { active: BooksTab; reviewCount?: number }) {
   return (
     <nav className="flex flex-wrap gap-1 border-b border-line pb-3" aria-label="Books">
       {TABS.map((tab) => (
@@ -25,15 +23,6 @@ export function BooksTabs({ active, reviewCount = 0 }: { active: BooksTab; revie
           }`}
         >
           {tab.label}
-          {tab.key === "review" && reviewCount > 0 && (
-            <span
-              className={`ml-1.5 inline-grid h-4 min-w-4 place-items-center rounded-full px-1 text-[0.65rem] font-semibold ${
-                active === "review" ? "bg-paper/20 text-paper" : "bg-brass/15 text-brass-deep"
-              }`}
-            >
-              {reviewCount}
-            </span>
-          )}
         </Link>
       ))}
     </nav>

@@ -1,5 +1,6 @@
 // Server-side data loaders for the books. All respect RLS via the user's session.
 
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { fromRow, type Txn, type TxnRow } from "./types";
 import type { VendorRule } from "./categorize";
@@ -43,24 +44,34 @@ function toCompany(r: CompanyRow): BooksCompany {
  * any pending invites for this user's email, so a freshly-signed-up agent gains
  * access on their first books load.
  */
-export async function getActiveCompany(): Promise<BooksCompany | null> {
+// Cached per request: the (portal) layout and the page both call this, so it
+// resolves to one query per navigation. Pending-invite linking used to run here
+// on every load — it now runs once in the layout via linkMemberships().
+export const getActiveCompany = cache(
+  async (): Promise<BooksCompany | null> => {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    const { data } = await supabase
+      .from("companies")
+      .select("id, name, region, vat_registered, free_zone, plan, status")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (!data) return null;
+    return toCompany(data as CompanyRow);
+  },
+);
+
+// Link any pending company_member invites for this user (e.g. an invited tax
+// agent's first visit). Called once per request from the (portal) layout.
+export async function linkMemberships(): Promise<void> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-
   await supabase.rpc("link_my_memberships");
-
-  const { data } = await supabase
-    .from("companies")
-    .select("id, name, region, vat_registered, free_zone, plan, status")
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  if (!data) return null;
-  return toCompany(data as CompanyRow);
 }
 
 export async function listTransactions(companyId: string): Promise<Txn[]> {

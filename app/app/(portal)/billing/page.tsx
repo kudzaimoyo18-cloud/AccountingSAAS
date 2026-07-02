@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { PortalShell } from "@/components/PortalShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { getCompany } from "@/lib/portal";
 import { TIERS } from "@/lib/content";
@@ -8,12 +7,11 @@ import { PAYMENT_LINKS } from "@/lib/billing";
 export const metadata = { title: "Billing — Mizan" };
 
 export default async function BillingPage() {
-  const { profile, company } = await getCompany();
+  const { company } = await getCompany();
   if (!company) redirect("/app/onboarding");
 
   return (
-    <PortalShell active="/app/billing" isAdmin={profile?.role === "admin"}>
-      <div className="mx-auto max-w-4xl">
+    <div className="mx-auto max-w-4xl">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="font-display text-3xl font-semibold tracking-tight">Billing</h1>
@@ -95,6 +93,5 @@ export default async function BillingPage() {
           </p>
         </div>
       </div>
-    </PortalShell>
   );
 }

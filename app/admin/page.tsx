@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { PortalShell } from "@/components/PortalShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { getProfile } from "@/lib/portal";
+import { setCompanyStatus } from "@/lib/admin-actions";
 
 export const metadata = { title: "Admin — Mizan" };
 
@@ -32,20 +33,35 @@ export default async function AdminPage() {
               const open = items.filter((i) => i.status !== "filed").length;
               const overdue = items.some((i) => i.status === "overdue");
               return (
-                <li key={c.id}>
+                <li
+                  key={c.id}
+                  className="flex flex-wrap items-center justify-between gap-3 px-6 py-4"
+                >
                   <Link
                     href={`/admin/${c.id}`}
-                    className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 transition-colors hover:bg-paper-dim/50"
+                    className="min-w-0 flex-1 transition-opacity hover:opacity-70"
                   >
-                    <div>
-                      <p className="text-sm font-medium">{c.name}</p>
-                      <p className="mt-0.5 text-xs text-ink-soft">
-                        {c.free_zone ?? "—"} · {c.plan} ·{" "}
-                        <span className="tnum">{open} open</span>
-                      </p>
-                    </div>
-                    <StatusBadge status={overdue ? "overdue" : c.status} />
+                    <p className="text-sm font-medium">{c.name}</p>
+                    <p className="mt-0.5 text-xs text-ink-soft">
+                      {c.free_zone ?? "—"} · {c.plan} ·{" "}
+                      <span className="tnum">{open} open</span>
+                    </p>
                   </Link>
+                  <div className="flex items-center gap-3">
+                    <StatusBadge status={overdue ? "overdue" : c.status} />
+                    {c.status !== "active" && (
+                      <form action={setCompanyStatus}>
+                        <input type="hidden" name="company_id" value={c.id} />
+                        <input type="hidden" name="status" value="active" />
+                        <button
+                          type="submit"
+                          className="btn-primary px-3 py-1.5 text-xs"
+                        >
+                          Approve
+                        </button>
+                      </form>
+                    )}
+                  </div>
                 </li>
               );
             })}

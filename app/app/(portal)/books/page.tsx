@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { PortalShell } from "@/components/PortalShell";
 import { BooksTabs } from "@/components/books/BooksTabs";
 import { CategoryBadge, StatusPill } from "@/components/books/ui";
-import { getProfile } from "@/lib/portal";
 import { getActiveCompany, listTransactions } from "@/lib/books/repo";
 import { buildReports } from "@/lib/books/reports";
 import { addTransaction } from "@/lib/books/actions";
@@ -18,7 +16,6 @@ export default async function BooksPage({
 }: {
   searchParams: Promise<{ ok?: string; error?: string; review?: string; imported?: string; auto?: string }>;
 }) {
-  const { profile } = await getProfile();
   const company = await getActiveCompany();
   if (!company) redirect("/app/onboarding");
 
@@ -31,8 +28,7 @@ export default async function BooksPage({
   const today = new Date().toISOString().slice(0, 10);
 
   return (
-    <PortalShell active="/app/books" isAdmin={profile?.role === "admin"}>
-      <div className="mx-auto max-w-5xl">
+    <div className="mx-auto max-w-5xl">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="eyebrow">{cfg.flag} {cfg.label} · {cfg.filingAuthority}</p>
@@ -62,7 +58,7 @@ export default async function BooksPage({
 
         {!imported && reports.reviewCount > 0 && (
           <Link
-            href="/app/books/review"
+            href="/app/reviews"
             className="mt-4 flex items-center justify-between rounded-2xl border border-brass/40 bg-brass/5 px-5 py-3.5 transition-colors hover:bg-brass/10"
           >
             <span className="text-sm">
@@ -161,7 +157,6 @@ export default async function BooksPage({
           </div>
         )}
       </div>
-    </PortalShell>
   );
 }
 
@@ -197,11 +192,11 @@ function ImportResult({ total, auto, review }: { total: number; auto: number; re
           </p>
         </div>
         {review > 0 ? (
-          <Link href="/app/books/review" className="btn-primary whitespace-nowrap">
+          <Link href="/app/reviews" className="btn-primary whitespace-nowrap">
             Review {review} →
           </Link>
         ) : (
-          <Link href="/app/books/reports" className="btn-primary whitespace-nowrap">
+          <Link href="/app/reports" className="btn-primary whitespace-nowrap">
             See reports →
           </Link>
         )}
