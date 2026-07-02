@@ -1,9 +1,10 @@
 import Link from "next/link";
 
-export type BooksTab = "overview" | "review" | "reports" | "import" | "close";
+export type BooksTab = "overview" | "ledger" | "review" | "reports" | "import" | "close";
 
 const TABS: { key: BooksTab; label: string; href: string }[] = [
   { key: "overview", label: "Overview", href: "/app/books" },
+  { key: "ledger", label: "Ledger", href: "/app/books/ledger" },
   { key: "review", label: "Review", href: "/app/books/review" },
   { key: "reports", label: "Reports", href: "/app/books/reports" },
   { key: "import", label: "Import", href: "/app/books/import" },

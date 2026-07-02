@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { PortalShell } from "@/components/PortalShell";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -56,6 +57,18 @@ export default async function AdminCompanyPage({
         </p>
 
         <div className="mt-4 flex flex-wrap items-center gap-3">
+          <Link href={`/admin/${company.id}/ledger`} className="btn-primary px-3 py-1.5 text-xs">
+            Open AI ledger
+          </Link>
+          <Link href={`/admin/${company.id}/reports`} className="btn-ghost px-3 py-1.5 text-xs">
+            Statements
+          </Link>
+          <Link href={`/admin/${company.id}/bank`} className="btn-ghost px-3 py-1.5 text-xs">
+            Bank
+          </Link>
+          <Link href={`/admin/${company.id}/tax`} className="btn-ghost px-3 py-1.5 text-xs">
+            VAT &amp; tax
+          </Link>
           <StatusBadge status={company.status} />
           <form action={setCompanyStatus} className="flex items-center gap-2">
             <input type="hidden" name="company_id" value={company.id} />
