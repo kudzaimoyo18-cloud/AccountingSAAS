@@ -22,13 +22,13 @@ export function Hero() {
           <h1 className="rise rise-2 mt-6 font-display text-[clamp(2.6rem,1.2rem+5vw,4.6rem)] font-semibold leading-[1.02] tracking-[-0.02em]">
             Books balanced.
             <br />
-            Taxes filed.{" "}
+            Taxes ready.{" "}
             <span className="italic text-brass-deep">Done.</span>
           </h1>
 
           <p className="rise rise-3 mt-7 max-w-xl text-lg leading-relaxed text-ink-soft">
-            {BRAND.promise} A fixed monthly fee — reviewed and filed by a
-            licensed FTA tax agent. No spreadsheets, no surprise bills.
+            {BRAND.promise} Nothing posts without your approval — and it&apos;s a
+            fixed monthly fee, not hourly bills.
           </p>
 
           <div className="rise rise-4 mt-9 flex flex-wrap items-center gap-3">
@@ -54,10 +54,10 @@ export function Hero() {
 
 function HeroVisual() {
   const rows = [
-    { label: "Bookkeeping", value: "Up to date", done: true },
-    { label: "VAT return — Q2", value: "Filed", done: true },
-    { label: "Corporate tax", value: "Registered", done: true },
-    { label: "Next deadline", value: "28 Jul", done: false },
+    { label: "DEWA invoice — utilities", value: "AED 1,240 · approved", done: true },
+    { label: "Client invoice — sales", value: "AED 12,600 · approved", done: true },
+    { label: "VAT position (5%)", value: "AED 568 due", done: false },
+    { label: "Net profit, this period", value: "AED 84,300", done: false },
   ];
   return (
     <div className="rise rise-3 relative">
@@ -65,13 +65,13 @@ function HeroVisual() {
         <div className="flex items-center justify-between border-b border-line pb-4">
           <div>
             <p className="text-xs uppercase tracking-[0.16em] text-ink-soft">
-              Compliance status
+              Your books — live
             </p>
             <p className="font-display text-lg font-medium">Meridian Trading FZ-LLC</p>
           </div>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-evergreen/10 px-3 py-1 text-xs font-medium text-evergreen">
             <span className="h-1.5 w-1.5 rounded-full bg-evergreen" />
-            Compliant
+            Balanced
           </span>
         </div>
         <ul className="mt-2 divide-y divide-line">

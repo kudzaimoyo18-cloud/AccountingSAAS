@@ -28,13 +28,13 @@ export const metadata: Metadata = {
     "FTA tax agent",
     "corporate tax registration UAE",
   ],
-  title: "Mizan — Books balanced. Taxes filed. Done.",
+  title: "Mizan — Books balanced. Taxes ready. Done.",
   description:
-    "AI-native accounting, VAT and corporate tax for UAE free-zone companies. We do the work — you get clean books and on-time filings. Fixed monthly fee.",
+    "AI bookkeeping software for UAE free-zone companies. Upload invoices and statements — AI drafts your double-entry books, you approve every line, VAT and corporate tax stay filing-ready.",
   openGraph: {
-    title: "Mizan — Accounting & tax, done for you",
+    title: "Mizan — AI bookkeeping for UAE free-zone companies",
     description:
-      "AI-native bookkeeping, VAT and corporate tax for UAE free-zone companies. Fixed monthly fee, reviewed by a licensed FTA tax agent.",
+      "Upload the paperwork, approve the AI-drafted lines, and your P&L, balance sheet, VAT and corporate-tax figures stay filing-ready. Fixed monthly fee.",
     type: "website",
   },
 };
