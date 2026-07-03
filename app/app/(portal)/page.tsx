@@ -7,6 +7,9 @@ import { StatusBadge } from "@/components/StatusBadge";
 
 export const metadata = { title: "Overview — Mizan" };
 
+// Always live — reflect newly approved figures immediately.
+export const dynamic = "force-dynamic";
+
 function money(n: number) {
   return n.toLocaleString("en-AE", {
     minimumFractionDigits: 2,
