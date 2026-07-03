@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { getActiveCompany, listTransactions } from "@/lib/books/repo";
-import { buildReports } from "@/lib/books/reports";
+import { getActiveCompany } from "@/lib/books/repo";
+import { loadSummary } from "@/lib/books/summary";
 import { money, longDate } from "@/lib/demo/format";
 import { REGIONS } from "@/lib/demo/regions";
 
@@ -11,8 +11,7 @@ export default async function PrintReport() {
   const company = await getActiveCompany();
   if (!company) redirect("/app/onboarding");
 
-  const txns = await listTransactions(company.id);
-  const reports = buildReports(txns, company.region);
+  const { reports } = await loadSummary(company);
   const cfg = REGIONS[company.region];
   const period =
     reports.periodStart && reports.periodEnd
