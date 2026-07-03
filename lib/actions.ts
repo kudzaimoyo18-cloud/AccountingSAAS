@@ -25,6 +25,8 @@ export async function createCompany(formData: FormData) {
   const vatRegistered = formData.get("vat_registered") === "on";
 
   if (!name) redirect("/app/onboarding?error=Company+name+is+required");
+  if (formData.get("agree_terms") !== "on")
+    redirect("/app/onboarding?error=Please+accept+the+Terms+and+Privacy+Policy");
   if (!REGIONS.includes(region as (typeof REGIONS)[number]))
     redirect("/app/onboarding?error=Invalid+region");
   if (!PLANS.includes(plan as (typeof PLANS)[number]))

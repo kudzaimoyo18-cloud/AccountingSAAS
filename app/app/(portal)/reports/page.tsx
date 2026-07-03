@@ -6,6 +6,10 @@ import { CT_THRESHOLD } from "@/lib/tax";
 
 export const metadata = { title: "Reports — Mizan" };
 
+// Financial figures must always be live — never serve a cached render, so a
+// newly approved ledger line shows up in the statements immediately.
+export const dynamic = "force-dynamic";
+
 function money(n: number) {
   return n.toLocaleString("en-AE", {
     minimumFractionDigits: 2,

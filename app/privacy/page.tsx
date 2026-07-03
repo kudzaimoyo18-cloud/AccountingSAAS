@@ -10,14 +10,14 @@ export default function PrivacyPage() {
   return (
     <LegalLayout
       title="Privacy Policy"
-      lastUpdated="17 June 2026"
+      lastUpdated="3 July 2026"
       intro="This policy explains what data Mizan collects, how we use it, who processes it, and the rights you have over it."
     >
       <LegalSection heading="1. Who controls your data">
         <p>
-          The data controller is [LEGAL ENTITY NAME], registered in [England &amp; Wales] under company number
-          [00000000], registered office [registered address]. For any privacy matter contact
-          [privacy@yourdomain]. Our UK ICO registration reference is [ICO ref — once registered].
+          The data controller is Kudzai Moyo, an individual based in Dubai, United Arab Emirates, trading as
+          &ldquo;Mizan&rdquo;. For any privacy matter contact kudzaimoyo18@gmail.com. If Mizan is later
+          transferred to a registered company, we will update this policy with that company&rsquo;s details.
         </p>
       </LegalSection>
 
@@ -68,7 +68,7 @@ export default function PrivacyPage() {
 
       <LegalSection heading="7. Storage and security">
         <p>
-          Your data is stored with Supabase ([hosting region]). Each company&rsquo;s data is isolated using
+          Your data is stored with Supabase on managed cloud infrastructure. Each company&rsquo;s data is isolated using
           row-level security, transmitted over encrypted connections, and protected by access controls. No
           method of storage or transmission is completely secure, but we take reasonable measures to protect
           your data.
@@ -85,10 +85,11 @@ export default function PrivacyPage() {
 
       <LegalSection heading="9. Your rights">
         <p>
-          Under UK GDPR and, where it applies, the UAE Personal Data Protection Law, you have the right to
-          access, correct, delete, restrict, or port your data, and to object to certain processing or withdraw
-          consent. To exercise any right, contact [privacy@yourdomain]. You also have the right to complain to
-          the UK Information Commissioner&rsquo;s Office (ico.org.uk) or the UAE Data Office.
+          Under the UAE Personal Data Protection Law (Federal Decree-Law 45 of 2021) and, where it applies,
+          UK GDPR, you have the right to access, correct, delete, restrict, or port your data, and to object
+          to certain processing or withdraw consent. To exercise any right, contact kudzaimoyo18@gmail.com.
+          You also have the right to complain to the UAE Data Office or, for UK users, the UK Information
+          Commissioner&rsquo;s Office (ico.org.uk).
         </p>
       </LegalSection>
 
@@ -112,7 +113,7 @@ export default function PrivacyPage() {
 
       <LegalSection heading="13. Contact">
         <p>
-          Privacy questions: [privacy@yourdomain]. See also our{" "}
+          Privacy questions: kudzaimoyo18@gmail.com. See also our{" "}
           <Link href="/terms" className="underline hover:text-ink">Terms of Service</Link>.
         </p>
       </LegalSection>

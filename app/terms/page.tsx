@@ -10,14 +10,15 @@ export default function TermsPage() {
   return (
     <LegalLayout
       title="Terms of Service"
-      lastUpdated="17 June 2026"
+      lastUpdated="3 July 2026"
       intro="These terms govern your use of Mizan. By creating an account or using the software, you agree to them."
     >
       <LegalSection heading="1. Who we are">
         <p>
-          Mizan is a software product provided by [LEGAL ENTITY NAME], a company registered in [England &amp;
-          Wales] under company number [00000000], with its registered office at [registered address]
-          (&ldquo;Mizan&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;). You can reach us at [legal@yourdomain].
+          Mizan is a software product operated by Kudzai Moyo, an individual based in Dubai, United Arab
+          Emirates, trading as &ldquo;Mizan&rdquo; (&ldquo;Mizan&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;).
+          You can reach us at kudzaimoyo18@gmail.com. If Mizan is later transferred to a registered company,
+          we will update these terms with that company&rsquo;s details.
         </p>
       </LegalSection>
 
@@ -83,7 +84,7 @@ export default function TermsPage() {
           To the maximum extent permitted by law, we are not liable for indirect or consequential loss, loss
           of profit, loss of data, or for any tax, penalty, or interest assessed against you — including any
           loss arising from a suggestion you did not review. Our total aggregate liability is limited to the
-          greater of the amount you paid us in the 12 months before the claim or [GBP 100].
+          greater of the amount you paid us in the 12 months before the claim or AED 500.
         </p>
         <p>
           Nothing in these terms excludes liability that cannot be excluded by law, such as liability for death
@@ -115,13 +116,13 @@ export default function TermsPage() {
 
       <LegalSection heading="12. Governing law">
         <p>
-          These terms are governed by the laws of [England &amp; Wales], and the courts of [England &amp;
-          Wales] have exclusive jurisdiction over any dispute.
+          These terms are governed by the federal laws of the United Arab Emirates as applied in the Emirate
+          of Dubai, and the courts of Dubai have exclusive jurisdiction over any dispute.
         </p>
       </LegalSection>
 
       <LegalSection heading="13. Contact">
-        <p>Questions about these terms: [legal@yourdomain].</p>
+        <p>Questions about these terms: kudzaimoyo18@gmail.com.</p>
       </LegalSection>
     </LegalLayout>
   );
