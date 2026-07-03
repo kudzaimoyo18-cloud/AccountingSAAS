@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { PortalShell } from "@/components/PortalShell";
+import { Logo } from "@/components/Logo";
 import { createCompany } from "@/lib/actions";
 import { getCompany } from "@/lib/portal";
 
@@ -7,23 +8,52 @@ export const metadata = { title: "Set up your company — Mizan" };
 
 const ZONES = ["IFZA", "DMCC", "Meydan", "SHAMS", "RAKEZ", "DAFZA", "JAFZA", "ADGM", "DIFC", "Mainland", "Other"];
 
+const STEPS = [
+  { n: 1, label: "Company details", state: "now" },
+  { n: 2, label: "Quick approval", state: "next" },
+  { n: 3, label: "Start your books", state: "later" },
+];
+
 export default async function OnboardingPage({
   searchParams,
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
-  const { profile, company } = await getCompany();
+  const { company } = await getCompany();
   if (company) redirect("/app");
   const { error } = await searchParams;
 
   return (
-    <PortalShell active="/app" isAdmin={profile?.role === "admin"}>
+    <div className="min-h-screen px-6 py-10">
       <div className="mx-auto max-w-lg">
-        <h1 className="font-display text-3xl font-semibold tracking-tight">
+        <Link href="/" aria-label="Mizan home">
+          <Logo />
+        </Link>
+
+        {/* Step indicator */}
+        <ol className="mt-8 flex items-center gap-2 text-xs" aria-label="Onboarding steps">
+          {STEPS.map((s, i) => (
+            <li key={s.n} className="flex items-center gap-2">
+              <span
+                className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 font-medium ${
+                  s.state === "now"
+                    ? "bg-ink text-paper"
+                    : "border border-line text-ink-soft"
+                }`}
+              >
+                <span className="tnum">{s.n}</span> {s.label}
+              </span>
+              {i < STEPS.length - 1 && <span className="text-ink-soft" aria-hidden>→</span>}
+            </li>
+          ))}
+        </ol>
+
+        <h1 className="mt-8 font-display text-3xl font-semibold tracking-tight">
           Tell us about your company
         </h1>
         <p className="mt-2 text-sm text-ink-soft">
-          Two minutes. This sets up your compliance file.
+          Two minutes. Then we switch your account on — usually the same day — and
+          you can start your books.
         </p>
 
         <form action={createCompany} className="card mt-8 space-y-4">
@@ -76,19 +106,46 @@ export default async function OnboardingPage({
               <option value="pro">Pro — AED 2,900/mo</option>
             </select>
             <p className="mt-1.5 text-xs text-ink-soft">
-              Nothing is charged yet — we confirm your plan together during onboarding.
+              Nothing is charged now. You start free while we onboard you, and we
+              confirm billing together before anything is due.
             </p>
           </div>
 
+          <label className="flex items-start gap-2.5 border-t border-line pt-4 text-sm">
+            <input
+              type="checkbox"
+              name="agree_terms"
+              required
+              className="mt-0.5 h-4 w-4 rounded border-line"
+            />
+            <span>
+              I agree to the{" "}
+              <Link href="/terms" target="_blank" className="underline underline-offset-2 hover:text-ink">
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link href="/privacy" target="_blank" className="underline underline-offset-2 hover:text-ink">
+                Privacy Policy
+              </Link>
+              , and I understand Mizan is bookkeeping software, not a licensed tax
+              agent.
+            </span>
+          </label>
+
           {error && (
-            <p role="alert" className="text-sm text-danger">{error}</p>
+            <p role="alert" className="text-sm text-danger">{error.replace(/\+/g, " ")}</p>
           )}
 
           <button type="submit" className="btn-primary w-full">
-            Create my compliance file
+            Create my company
           </button>
         </form>
+
+        <p className="mt-6 text-center text-xs text-ink-soft">
+          After this step your account goes for a quick manual approval — we&apos;ll
+          switch it on and let you know.
+        </p>
       </div>
-    </PortalShell>
+    </div>
   );
 }
