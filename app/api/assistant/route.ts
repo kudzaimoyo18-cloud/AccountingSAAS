@@ -1,8 +1,8 @@
 import type { NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
-import { getActiveCompany, listTransactions } from "@/lib/books/repo";
-import { buildReports } from "@/lib/books/reports";
+import { getActiveCompany } from "@/lib/books/repo";
+import { loadSummary } from "@/lib/books/summary";
 
 export const runtime = "nodejs";
 
@@ -48,24 +48,16 @@ export async function POST(req: NextRequest): Promise<Response> {
     return Response.json({ reply: "Ask me anything about your books." });
   }
 
-  // Compact grounding context from the caller's real books.
-  const txns = await listTransactions(company.id);
-  const r = buildReports(txns, company.region);
-  const { data: ledgerAgg } = await supabase
-    .from("ledger_entries")
-    .select("status")
-    .eq("company_id", company.id);
-  const draftLedger = ((ledgerAgg ?? []) as { status: string }[]).filter(
-    (l) => l.status !== "approved",
-  ).length;
+  // Compact grounding context from the caller's real double-entry books — the
+  // same figures /app/reports shows, so the assistant never contradicts them.
+  const { reports: r } = await loadSummary(company);
 
   const context = [
     `Company: ${company.name} (${company.region.toUpperCase()}, ${company.plan} plan).`,
-    `Posted transactions: ${r.postedCount}; in review: ${r.reviewCount}.`,
+    `Approved ledger entries (posted): ${r.postedCount}; awaiting review/approval: ${r.reviewCount}.`,
     `Revenue: ${r.revenue}; total expenses: ${r.totalExpenses}; net profit: ${r.netProfit}.`,
     `VAT — output: ${r.outputVat}, input: ${r.inputVat}, net due: ${r.vatDue}.`,
     `Estimated tax to set aside: ${r.taxSetAside} (annual projected profit ${r.annualProjectedProfit}).`,
-    `Ledger lines awaiting review/approval: ${draftLedger}.`,
   ].join("\n");
 
   const system = `You are Mizan's accounting assistant for a UAE small-business owner who does their own books. Be concise, friendly and practical, like a sharp personal assistant. You can explain their figures and walk them through bookkeeping tasks (reviewing flagged lines, importing statements, VAT, corporate tax). When it helps move a task forward, proactively ask ONE clarifying question. Never invent numbers — use only the context below; if a figure isn't there, say so and point them to the right screen (Books, Reviews, Reports, Documents). You are software, not a licensed FTA tax agent — for anything being filed, remind them to have a licensed agent review it.

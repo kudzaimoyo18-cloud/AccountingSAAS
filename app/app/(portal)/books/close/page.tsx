@@ -2,8 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BooksTabs } from "@/components/books/BooksTabs";
 import { createClient } from "@/lib/supabase/server";
-import { getActiveCompany, listTransactions } from "@/lib/books/repo";
-import { buildReports } from "@/lib/books/reports";
+import { getActiveCompany } from "@/lib/books/repo";
+import { loadSummary } from "@/lib/books/summary";
 import { generateTaxPack, inviteAgent, revokeAgent } from "@/lib/books/handoff";
 import { money, longDate } from "@/lib/demo/format";
 import { REGIONS } from "@/lib/demo/regions";
@@ -34,8 +34,7 @@ export default async function ClosePage({
 
   const { ok, error } = await searchParams;
   const supabase = await createClient();
-  const txns = await listTransactions(company.id);
-  const reports = buildReports(txns, company.region);
+  const { reports } = await loadSummary(company);
   const cfg = REGIONS[company.region];
 
   const [{ data: packs }, { data: members }] = await Promise.all([

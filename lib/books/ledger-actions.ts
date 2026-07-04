@@ -27,6 +27,35 @@ function num(v: FormDataEntryValue | null): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+type Db = Awaited<ReturnType<typeof createClient>>;
+
+/**
+ * True if `date` falls inside a CLOSED accounting period for this company. Used
+ * to stop edits/approvals/deletes that would silently invalidate a period's
+ * snapshotted VAT/CT figures. Fails OPEN (returns false) on a query error so a
+ * transient DB hiccup never blocks all bookkeeping.
+ */
+async function isDateInClosedPeriod(
+  supabase: Db,
+  companyId: string,
+  date: string | null,
+): Promise<boolean> {
+  if (!date) return false;
+  const { data, error } = await supabase
+    .from("accounting_periods")
+    .select("id")
+    .eq("company_id", companyId)
+    .eq("status", "closed")
+    .lte("start_date", date)
+    .gte("end_date", date)
+    .limit(1);
+  if (error) {
+    console.error("[books/isDateInClosedPeriod]", error.message);
+    return false;
+  }
+  return Boolean(data && data.length > 0);
+}
+
 /**
  * Resolve the caller's own company. The scope always comes from the session —
  * we never trust a form-supplied company_id (that was fine for the admin surface
@@ -140,11 +169,22 @@ export async function updateLedgerEntry(formData: FormData) {
 
   const direction = String(formData.get("direction") ?? "expense");
   const category = String(formData.get("category") ?? "uncategorised");
+  const entryDate = String(formData.get("entry_date") ?? "").trim() || null;
+  const amount = num(formData.get("amount"));
+  const vat = num(formData.get("vat_amount"));
+
+  // Reject values the double-entry engine can't post (a negative amount hits the
+  // journal_lines `debit >= 0` constraint and the line would silently unpost).
+  if (!(amount > 0)) redirect(`${LEDGER}?error=Amount+must+be+greater+than+zero`);
+  if (vat < 0) redirect(`${LEDGER}?error=VAT+cannot+be+negative`);
+  if (await isDateInClosedPeriod(supabase, company.id, entryDate)) {
+    redirect(`${LEDGER}?error=That+date+is+in+a+closed+period`);
+  }
 
   const { error } = await supabase
     .from("ledger_entries")
     .update({
-      entry_date: String(formData.get("entry_date") ?? "").trim() || null,
+      entry_date: entryDate,
       description: String(formData.get("description") ?? "").slice(0, 500),
       counterparty:
         String(formData.get("counterparty") ?? "").trim().slice(0, 200) || null,
@@ -157,18 +197,26 @@ export async function updateLedgerEntry(formData: FormData) {
       currency:
         String(formData.get("currency") ?? "AED").trim().slice(0, 8).toUpperCase() ||
         "AED",
-      amount: num(formData.get("amount")),
-      vat_amount: num(formData.get("vat_amount")),
+      amount,
+      vat_amount: vat,
       reviewed_by: user.id,
     })
     .eq("id", id)
     .eq("company_id", company.id);
 
-  if (error) console.error("[books/updateLedgerEntry]", error.message);
-  else await syncJournalForEntry(supabase, company.id, id);
+  if (error) {
+    console.error("[books/updateLedgerEntry]", error.message);
+    redirect(`${LEDGER}?error=Could+not+save+changes`);
+  }
 
+  // Re-post so Reports reflects the edit. If posting fails, tell the user rather
+  // than leaving an approved line silently out of the books.
+  const res = await syncJournalForEntry(supabase, company.id, id);
   revalidatePath(LEDGER);
   revalidatePath("/app/reports");
+  if (!res.ok) {
+    redirect(`${LEDGER}?error=Saved,+but+could+not+post+to+the+ledger+—+re-approve+to+retry`);
+  }
   redirect(LEDGER);
 }
 
@@ -182,14 +230,43 @@ export async function setLedgerStatus(formData: FormData) {
     redirect(LEDGER);
   }
 
+  // Need the current row: its date (period lock) and its status (to revert to if
+  // posting fails after an approve).
+  const { data: entry } = await supabase
+    .from("ledger_entries")
+    .select("entry_date, status")
+    .eq("id", id)
+    .eq("company_id", company.id)
+    .maybeSingle();
+  if (!entry) redirect(LEDGER);
+  const prev = entry as { entry_date: string | null; status: string };
+
+  if (await isDateInClosedPeriod(supabase, company.id, prev.entry_date)) {
+    redirect(`${LEDGER}?error=That+line+is+in+a+closed+period`);
+  }
+
   const { error } = await supabase
     .from("ledger_entries")
     .update({ status, reviewed_by: user.id })
     .eq("id", id)
     .eq("company_id", company.id);
+  if (error) {
+    console.error("[books/setLedgerStatus]", error.message);
+    redirect(`${LEDGER}?error=Could+not+update+status`);
+  }
 
-  if (error) console.error("[books/setLedgerStatus]", error.message);
-  else await syncJournalForEntry(supabase, company.id, id);
+  const res = await syncJournalForEntry(supabase, company.id, id);
+  if (!res.ok && status === "approved") {
+    // Never leave an "approved" line that isn't actually in the books — revert.
+    await supabase
+      .from("ledger_entries")
+      .update({ status: prev.status })
+      .eq("id", id)
+      .eq("company_id", company.id);
+    revalidatePath(LEDGER);
+    revalidatePath("/app/reports");
+    redirect(`${LEDGER}?error=Could+not+post+this+line+—+approval+reverted,+please+retry`);
+  }
 
   revalidatePath(LEDGER);
   revalidatePath("/app/reports");
@@ -202,10 +279,19 @@ export async function addLedgerEntry(formData: FormData) {
 
   const direction = String(formData.get("direction") ?? "expense");
   const category = String(formData.get("category") ?? "uncategorised");
+  const entryDate = String(formData.get("entry_date") ?? "").trim() || null;
+  const amount = num(formData.get("amount"));
+  const vat = num(formData.get("vat_amount"));
+
+  if (!(amount > 0)) redirect(`${LEDGER}?error=Amount+must+be+greater+than+zero`);
+  if (vat < 0) redirect(`${LEDGER}?error=VAT+cannot+be+negative`);
+  if (await isDateInClosedPeriod(supabase, company.id, entryDate)) {
+    redirect(`${LEDGER}?error=That+date+is+in+a+closed+period`);
+  }
 
   const { error } = await supabase.from("ledger_entries").insert({
     company_id: company.id,
-    entry_date: String(formData.get("entry_date") ?? "").trim() || null,
+    entry_date: entryDate,
     description: String(formData.get("description") ?? "").slice(0, 500),
     counterparty:
       String(formData.get("counterparty") ?? "").trim().slice(0, 200) || null,
@@ -218,8 +304,8 @@ export async function addLedgerEntry(formData: FormData) {
     currency:
       String(formData.get("currency") ?? "AED").trim().slice(0, 8).toUpperCase() ||
       "AED",
-    amount: num(formData.get("amount")),
-    vat_amount: num(formData.get("vat_amount")),
+    amount,
+    vat_amount: vat,
     source: "manual",
     status: "reviewed",
   });
@@ -238,6 +324,20 @@ export async function deleteLedgerEntry(formData: FormData) {
 
   const id = String(formData.get("id") ?? "");
   if (!id) redirect(LEDGER);
+
+  // Don't let a delete quietly invalidate a closed period's snapshot.
+  const { data: entry } = await supabase
+    .from("ledger_entries")
+    .select("entry_date")
+    .eq("id", id)
+    .eq("company_id", company.id)
+    .maybeSingle();
+  if (
+    entry &&
+    (await isDateInClosedPeriod(supabase, company.id, (entry as { entry_date: string | null }).entry_date))
+  ) {
+    redirect(`${LEDGER}?error=Cannot+delete+a+line+in+a+closed+period`);
+  }
 
   const { error } = await supabase
     .from("ledger_entries")

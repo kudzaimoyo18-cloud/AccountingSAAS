@@ -51,21 +51,31 @@ type LedgerEntryRow = {
  * state, so /app/reports always reflects the currently-approved books:
  *   - always removes any existing journal entry for this ledger line (idempotent),
  *   - if the line is 'approved', posts a fresh balanced journal entry (cash basis).
- * Safe to call after approve, un-approve, or edit. Best-effort: on failure it logs
- * and leaves the line unposted rather than blocking the user's action.
+ * Safe to call after approve, un-approve, or edit.
+ *
+ * Returns { ok } so the caller can react to a posting failure (e.g. revert an
+ * approval and tell the user) instead of the line silently staying unposted —
+ * the previous best-effort version could show a line "Approved" while it never
+ * reached Reports.
  */
+export type SyncResult = { ok: boolean; error?: string };
+
 export async function syncJournalForEntry(
   supabase: Db,
   companyId: string,
   ledgerEntryId: string,
-): Promise<void> {
+): Promise<SyncResult> {
   try {
     // Clear any prior journal for this ledger line first.
-    await supabase
+    const { error: delErr } = await supabase
       .from("journal_entries")
       .delete()
       .eq("company_id", companyId)
       .eq("ledger_entry_id", ledgerEntryId);
+    if (delErr) {
+      console.error("[syncJournal] clear:", delErr.message);
+      return { ok: false, error: delErr.message };
+    }
 
     const { data } = await supabase
       .from("ledger_entries")
@@ -75,7 +85,8 @@ export async function syncJournalForEntry(
       .maybeSingle();
 
     const e = data as LedgerEntryRow | null;
-    if (!e || e.status !== "approved") return;
+    // Not approved → nothing should be posted; the clear above is the whole job.
+    if (!e || e.status !== "approved") return { ok: true };
 
     const codeToId = await ensureChart(supabase, companyId);
     const lines = postingLinesFor({
@@ -91,7 +102,7 @@ export async function syncJournalForEntry(
     }));
     if (resolved.some((l) => !l.account_id)) {
       console.error("[syncJournal] missing account for ledger entry", e.id);
-      return;
+      return { ok: false, error: "Chart of accounts is missing an account for this line." };
     }
 
     const { data: header, error: hErr } = await supabase
@@ -107,7 +118,7 @@ export async function syncJournalForEntry(
       .single();
     if (hErr || !header) {
       console.error("[syncJournal] header:", hErr?.message);
-      return;
+      return { ok: false, error: hErr?.message ?? "Could not create journal entry." };
     }
 
     // All lines in one insert so the deferred balance trigger sees a complete,
@@ -122,9 +133,14 @@ export async function syncJournalForEntry(
     );
     if (lErr) {
       console.error("[syncJournal] lines:", lErr.message);
+      // Roll back the orphan header so a retry can re-post cleanly.
       await supabase.from("journal_entries").delete().eq("id", (header as { id: string }).id);
+      return { ok: false, error: lErr.message };
     }
+    return { ok: true };
   } catch (err) {
-    console.error("[syncJournal]", err instanceof Error ? err.message : err);
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[syncJournal]", msg);
+    return { ok: false, error: msg };
   }
 }
