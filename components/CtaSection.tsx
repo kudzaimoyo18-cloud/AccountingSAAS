@@ -22,8 +22,9 @@ export function CtaSection() {
                 Stop worrying about the FTA.
               </h2>
               <p className="mt-4 text-paper/70">
-                Join the waitlist. The first 50 companies get setup free and
-                locked founding pricing for life.
+                Mizan is invite-only while we onboard founding members. Join the
+                waitlist — the first 50 companies get setup free and founding
+                pricing locked for life.
               </p>
             </div>
             <div className="rounded-2xl bg-paper p-6 text-ink shadow-card">

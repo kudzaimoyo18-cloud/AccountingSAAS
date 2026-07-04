@@ -4,9 +4,9 @@
 export const BRAND = {
   name: "Mizan",
   arabic: "ميزان",
-  tagline: "Books balanced. Taxes filed. Done.",
+  tagline: "Upload the paperwork. The books do themselves.",
   promise:
-    "AI-native accounting, VAT and corporate tax for UAE free-zone companies. We do the work — you get clean books and on-time filings.",
+    "AI bookkeeping and accounting software for UAE free-zone companies. Upload invoices, receipts and statements — Mizan drafts your double-entry books, you approve every line, and your VAT and corporate-tax figures are always ready.",
 } as const;
 
 export type Tier = {
@@ -23,14 +23,14 @@ export const TIERS: Tier[] = [
   {
     id: "starter",
     name: "Starter",
-    forWho: "Freelancers & dormant free-zone companies",
+    forWho: "Freelancers & quiet free-zone companies",
     priceAed: "349",
     cadence: "per month",
     features: [
-      "Bookkeeping kept current",
-      "Quarterly VAT return prepared & filed",
-      "Annual corporate tax return",
-      "Deadline alerts — never miss a filing",
+      "AI reads your invoices & receipts into draft books",
+      "Double-entry ledger — you approve every line",
+      "P&L and VAT position, always current",
+      "Filing-ready accounts pack (Excel / PDF)",
     ],
   },
   {
@@ -42,24 +42,25 @@ export const TIERS: Tier[] = [
     highlight: true,
     features: [
       "Everything in Starter",
-      "Monthly bookkeeping + P&L statement",
-      "Corporate tax planning & filing",
-      "Bank & invoice auto-sync",
+      "Full statements — balance sheet & trial balance",
+      "Corporate-tax estimate (9% over AED 375k)",
+      "Bank statement import & auto-categorisation",
+      "AI assistant that watches your books",
       "WhatsApp support, same-day replies",
     ],
   },
   {
     id: "pro",
     name: "Pro",
-    forWho: "Multi-entity & AED 3M+ revenue",
+    forWho: "Busier books & audit-minded founders",
     priceAed: "2,900",
     cadence: "per month",
     features: [
       "Everything in Growth",
-      "Dedicated reviewer (licensed FTA agent)",
-      "Management reports & cash-flow view",
-      "Multi-entity consolidation",
-      "Priority filing & audit-ready records",
+      "Invite your accountant or tax agent (read-only)",
+      "Period close with VAT & corporate-tax snapshot",
+      "Priority support & onboarding done with you",
+      "Audit-ready records, export any time",
     ],
   },
 ];
@@ -67,14 +68,14 @@ export const TIERS: Tier[] = [
 export const SETUP = {
   name: "One-time setup",
   priceAed: "1,500",
-  note: "Corporate tax registration, FTA setup, and opening books — waived when you start on Growth or Pro.",
+  note: "We set up your chart of accounts and opening books with you — waived for founding members and anyone starting on Growth or Pro.",
 };
 
 export const PROBLEMS = [
   {
     stat: "9%",
     label: "Corporate tax since June 2023",
-    body: "Every free-zone company now has to register, keep books, and file — or face penalties from the FTA.",
+    body: "Every free-zone company now has to register, keep proper books, and file — or face penalties from the FTA.",
   },
   {
     stat: "AED 10k+",
@@ -84,32 +85,36 @@ export const PROBLEMS = [
   {
     stat: "0",
     label: "In-house accountants at most SMEs",
-    body: "You run the business on spreadsheets and WhatsApp threads with an accountant who replies in three days.",
+    body: "So the books live in a spreadsheet nobody updates — and every VAT quarter turns into a panic.",
   },
 ];
 
 export const STEPS = [
   {
     n: "01",
-    title: "Connect & forward",
-    body: "Link your bank feed, forward invoices, or snap receipts. That's all we need from you.",
+    title: "Upload your paperwork",
+    body: "Drop in invoices, receipts, or bank statements. PDFs, photos, CSVs — whatever you have.",
   },
   {
     n: "02",
-    title: "We do the work",
-    body: "Our system categorises every transaction, builds your books, and drafts your VAT and corporate tax returns.",
+    title: "AI drafts, you approve",
+    body: "Mizan reads each document into draft ledger lines — date, amount, category, VAT split. You check and approve every line. Nothing enters your books without you.",
   },
   {
     n: "03",
-    title: "Reviewed & filed",
-    body: "A licensed FTA tax agent reviews and submits. You get clean books, filed returns, and a number you can trust.",
+    title: "Your accounts build themselves",
+    body: "Every approved line posts to real double-entry books. P&L, balance sheet, VAT position and corporate-tax estimate — live, filing-ready, exportable for your tax agent.",
   },
 ];
 
 export const FAQS = [
   {
-    q: "Is Mizan a licensed tax agent?",
-    a: "Mizan handles your accounting and prepares your returns. Every regulated filing is reviewed and submitted by a licensed FTA-registered tax agent we partner with — so you stay fully compliant.",
+    q: "Is Mizan an accountant or a licensed tax agent?",
+    a: "No — Mizan is software. It keeps your books and produces filing-ready figures, but it doesn't provide tax advice and doesn't file returns. When it's time to file, you export the accounts pack or invite your tax agent to view your books directly.",
+  },
+  {
+    q: "Can I trust AI with my books?",
+    a: "The AI only drafts. Every line it extracts is marked as a draft with a confidence score, and nothing posts to your books until you approve it. Your ledger stays balanced by construction — debits always equal credits.",
   },
   {
     q: "I'm in a free zone — do I really need this?",
@@ -117,14 +122,14 @@ export const FAQS = [
   },
   {
     q: "What do I have to do each month?",
-    a: "Almost nothing. Connect your bank once and forward invoices as they come. We handle categorisation, books, VAT, and corporate tax. You approve before anything is filed.",
+    a: "Upload your paperwork as it comes and spend a few minutes approving the drafted lines. That's it — your P&L, VAT position and corporate-tax estimate stay current on their own.",
   },
   {
     q: "How is this cheaper than a traditional accountant?",
-    a: "We automate the heavy lifting — categorisation, reconciliation, draft returns — so a small expert team can serve many companies. You get faster service at a fixed monthly fee, with no surprise hourly bills.",
+    a: "The AI does the data entry and categorisation that an accountant would bill hours for. You pay a fixed monthly subscription for software — and only pay a professional when you actually need advice or a filing.",
   },
   {
-    q: "What if I'm behind on my books or registration?",
-    a: "That's the most common case. Our one-time setup gets you registered, caught up, and audit-ready, then keeps you that way.",
+    q: "Is my financial data safe?",
+    a: "Your data lives in an isolated, access-controlled database — each company's books are separated by row-level security and encrypted in transit. We never sell your data. See our Privacy Policy for the full picture.",
   },
 ];

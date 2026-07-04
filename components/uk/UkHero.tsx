@@ -22,13 +22,13 @@ export function UkHero() {
           <h1 className="rise rise-2 mt-6 font-display text-[clamp(2.6rem,1.2rem+5vw,4.6rem)] font-semibold leading-[1.02] tracking-[-0.02em]">
             Books balanced.
             <br />
-            Tax filed. <span className="italic text-brass-deep">Done.</span>
+            Tax ready. <span className="italic text-brass-deep">Done.</span>
           </h1>
 
           <p className="rise rise-3 mt-7 max-w-xl text-lg leading-relaxed text-ink-soft">
             Making Tax Digital is here. {UK_BRAND.promise} A fixed monthly fee —
-            reviewed and filed by an HMRC-registered agent. No spreadsheets, no
-            surprise bills.
+            you approve every line, and your accountant files. No spreadsheets,
+            no surprise bills.
           </p>
 
           <div className="rise rise-4 mt-9 flex flex-wrap items-center gap-3">

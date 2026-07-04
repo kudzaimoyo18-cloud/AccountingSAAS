@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "Mizan — Books balanced. Taxes filed. Done.";
+export const alt = "Mizan — Books balanced. Taxes ready. Done.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -41,7 +41,7 @@ export default function OgImage() {
             Books balanced.
           </div>
           <div style={{ fontSize: 92, fontWeight: 600, lineHeight: 1.05, letterSpacing: -2, display: "flex", gap: 24 }}>
-            Taxes filed.{" "}
+            Taxes ready.{" "}
             <span style={{ color: "#8a6418", fontStyle: "italic" }}>Done.</span>
           </div>
         </div>

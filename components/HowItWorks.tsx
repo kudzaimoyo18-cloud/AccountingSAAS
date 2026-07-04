@@ -10,7 +10,7 @@ export function HowItWorks() {
             How it works
           </p>
           <h2 className="mt-5 font-display text-[clamp(1.9rem,1rem+3vw,3rem)] font-semibold leading-tight tracking-[-0.02em]">
-            You forward. We handle the rest.
+            You upload. You approve. That&apos;s the job.
           </h2>
         </div>
 

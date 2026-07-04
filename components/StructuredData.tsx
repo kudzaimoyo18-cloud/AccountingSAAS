@@ -6,14 +6,19 @@ export function StructuredData() {
   const data = [
     {
       "@context": "https://schema.org",
-      "@type": "ProfessionalService",
+      "@type": "SoftwareApplication",
       name: "Mizan",
       url: SITE,
       description:
-        "AI-native accounting, VAT and corporate tax service for UAE free-zone companies.",
-      areaServed: "AE",
-      priceRange: `AED ${TIERS[0].priceAed}–${TIERS[TIERS.length - 1].priceAed}/month`,
-      address: { "@type": "PostalAddress", addressCountry: "AE", addressLocality: "Dubai" },
+        "AI bookkeeping and accounting software for UAE free-zone companies — AI-drafted books you approve, with VAT and corporate-tax figures always filing-ready.",
+      applicationCategory: "FinanceApplication",
+      operatingSystem: "Web",
+      offers: {
+        "@type": "AggregateOffer",
+        priceCurrency: "AED",
+        lowPrice: TIERS[0].priceAed.replace(",", ""),
+        highPrice: TIERS[TIERS.length - 1].priceAed.replace(",", ""),
+      },
     },
     {
       "@context": "https://schema.org",
