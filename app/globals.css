@@ -26,6 +26,16 @@
   --font-sans: "IBM Plex Sans", system-ui, sans-serif;
 
   --grain-color: rgba(28, 29, 33, 0.025);
+
+  /* glass tokens */
+  --glass-highlight: rgba(255, 255, 255, 0.45);
+  --glass-surface-a: 0.55;
+  --glass-surface-b: 0.4;
+  --aurora-brass: rgb(var(--brass-rgb) / 0.26);
+  --aurora-evergreen: rgb(var(--evergreen-rgb) / 0.18);
+  --aurora-sand: rgb(var(--sand-rgb) / 0.65);
+  --ledger-rule: rgb(var(--brass-rgb) / 0.07);
+  --ledger-margin: rgb(var(--brass-rgb) / 0.14);
 }
 
 .dark {
@@ -43,6 +53,16 @@
   --danger-rgb: 232 110 100;
 
   --grain-color: rgba(240, 235, 224, 0.02);
+
+  /* glass tokens — dark: highlight dims, glass gets moodier, aurora glows */
+  --glass-highlight: rgba(255, 255, 255, 0.08);
+  --glass-surface-a: 0.5;
+  --glass-surface-b: 0.34;
+  --aurora-brass: rgb(var(--brass-rgb) / 0.3);
+  --aurora-evergreen: rgb(var(--evergreen-rgb) / 0.2);
+  --aurora-sand: rgb(var(--sand-rgb) / 0.6);
+  --ledger-rule: rgb(var(--brass-rgb) / 0.09);
+  --ledger-margin: rgb(var(--brass-rgb) / 0.18);
 }
 
 * { border-color: rgb(var(--line-rgb)); }
@@ -55,8 +75,18 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  background-image: radial-gradient(var(--grain-color) 1px, transparent 1px);
-  background-size: 4px 4px;
+  /* ledger sheet + warm aurora: crisp brass rules and saturated blobs give
+     the glass panels real detail to frost — layered under the paper grain */
+  background-image:
+    radial-gradient(var(--grain-color) 1px, transparent 1px),
+    linear-gradient(to right, transparent 71px, var(--ledger-margin) 71px 72.5px, transparent 72.5px),
+    repeating-linear-gradient(to bottom, transparent 0 27px, var(--ledger-rule) 27px 28px),
+    radial-gradient(30rem 30rem at 12% -6%, var(--aurora-brass), transparent 60%),
+    radial-gradient(26rem 26rem at 88% 10%, var(--aurora-evergreen), transparent 58%),
+    radial-gradient(20rem 20rem at 38% 44%, rgb(var(--brass-rgb) / 0.12), transparent 60%),
+    radial-gradient(44rem 38rem at 60% 108%, var(--aurora-sand), transparent 65%);
+  background-size: 4px 4px, 100% 100%, 100% 56px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+  background-attachment: scroll, scroll, scroll, fixed, fixed, fixed, fixed;
   transition: background-color 0.25s ease, color 0.25s ease;
 }
 
@@ -78,30 +108,93 @@ body {
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-full border border-line px-6 py-3 text-sm font-medium text-ink
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-line/70 px-6 py-3 text-sm font-medium text-ink
            transition-all duration-200 hover:border-ink hover:-translate-y-0.5
            focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass;
+    background: rgb(var(--surface-rgb) / 0.4);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
   }
 
+  /* frosted ledger card — the core glass surface */
   .card {
-    @apply rounded-2xl border border-line bg-surface p-7 shadow-card;
+    @apply rounded-3xl border p-7 shadow-card;
+    border-color: rgb(var(--line-rgb) / 0.55);
+    background: linear-gradient(
+      165deg,
+      rgb(var(--surface-rgb) / var(--glass-surface-a)),
+      rgb(var(--surface-rgb) / var(--glass-surface-b))
+    );
+    -webkit-backdrop-filter: blur(18px) saturate(1.35);
+    backdrop-filter: blur(18px) saturate(1.35);
+    box-shadow:
+      inset 0 1px 0 0 var(--glass-highlight),
+      0 1px 0 rgba(0, 0, 0, 0.04),
+      0 24px 48px -28px rgba(0, 0, 0, 0.28);
+  }
+
+  /* chrome surfaces: sidebars, sticky navs, mobile headers */
+  .glass-panel {
+    background: linear-gradient(
+      180deg,
+      rgb(var(--surface-rgb) / calc(var(--glass-surface-a) + 0.12)),
+      rgb(var(--surface-rgb) / var(--glass-surface-a))
+    );
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    backdrop-filter: blur(20px) saturate(1.3);
+    box-shadow: inset 0 1px 0 0 var(--glass-highlight);
   }
 
   .field {
-    @apply w-full rounded-xl border border-line bg-paper px-4 py-3 text-sm text-ink placeholder:text-ink-soft/60
+    @apply w-full rounded-2xl border px-4 py-3 text-sm text-ink placeholder:text-ink-soft/60
            focus:border-brass focus:outline-none focus:ring-2 focus:ring-brass/20;
+    border-color: rgb(var(--line-rgb) / 0.7);
+    background: rgb(var(--paper-rgb) / 0.65);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
   }
 
   .sidebar-link {
-    @apply flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-ink-soft transition-colors
-           hover:bg-paper-dim hover:text-ink;
+    @apply flex items-center gap-3 rounded-2xl px-4 py-2.5 text-sm font-medium text-ink-soft transition-colors
+           hover:text-ink;
+  }
+  .sidebar-link:hover {
+    background: rgb(var(--paper-dim-rgb) / 0.75);
   }
   .sidebar-link-active {
-    @apply bg-paper-dim text-ink;
+    @apply text-ink;
+    background: rgb(var(--paper-dim-rgb) / 0.85);
+    box-shadow: inset 0 1px 0 0 var(--glass-highlight);
   }
 
   .badge {
     @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+}
+
+/* browsers without backdrop-filter get near-opaque surfaces so text stays readable */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .card,
+  .glass-panel {
+    background: rgb(var(--surface-rgb) / 0.96);
+  }
+  .field {
+    background: rgb(var(--paper-rgb) / 0.96);
+  }
+  .btn-ghost {
+    background: rgb(var(--surface-rgb) / 0.9);
+  }
+}
+
+/* users who ask for less transparency get solid surfaces */
+@media (prefers-reduced-transparency: reduce) {
+  .card,
+  .glass-panel,
+  .field,
+  .btn-ghost {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: rgb(var(--surface-rgb) / 0.98);
   }
 }
 

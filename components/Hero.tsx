@@ -103,7 +103,7 @@ function HeroVisual() {
       {/* layered card behind for depth */}
       <div
         aria-hidden
-        className="absolute -bottom-5 -right-4 left-8 top-10 -z-0 rounded-2xl border border-line bg-paper-dim"
+        className="absolute -bottom-5 -right-4 left-8 top-10 -z-0 rounded-3xl border border-line bg-paper-dim"
       />
     </div>
   );

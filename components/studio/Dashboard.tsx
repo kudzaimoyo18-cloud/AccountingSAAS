@@ -156,7 +156,7 @@ function Kpi({
 }) {
   const accent = tone === "up" ? "text-evergreen" : tone === "down" ? "text-ink" : "text-ink";
   return (
-    <div className="rounded-2xl border border-line bg-surface p-5 shadow-card">
+    <div className="card p-5">
       <p className="text-xs font-medium uppercase tracking-wide text-ink-soft">{label}</p>
       <p className={`tnum mt-2 font-display text-2xl font-semibold ${accent}`}>{value}</p>
       {sub && <p className="tnum mt-1 text-xs text-ink-soft">{sub}</p>}

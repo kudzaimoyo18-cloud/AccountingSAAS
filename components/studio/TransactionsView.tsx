@@ -52,7 +52,7 @@ export function TransactionsView() {
         ))}
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-line bg-surface shadow-card">
+      <div className="card overflow-hidden p-0">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-ink-soft">

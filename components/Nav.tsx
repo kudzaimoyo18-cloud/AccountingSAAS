@@ -10,7 +10,7 @@ const LINKS = [
 
 export function Nav() {
   return (
-    <header className="sticky top-0 z-40 border-b border-line/70 bg-paper/80 backdrop-blur-md">
+    <header className="glass-panel sticky top-0 z-40 border-b border-line/50">
       <div className="shell flex h-16 items-center justify-between">
         <Link href="/" aria-label="Mizan home">
           <Logo />
