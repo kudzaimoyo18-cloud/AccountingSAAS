@@ -100,7 +100,7 @@ export function AppShell({
 
   return (
     <div className="flex min-h-screen">
-      <aside className="hidden w-60 shrink-0 flex-col border-r border-line bg-paper-dim/40 p-5 md:flex print:hidden">
+      <aside className="glass-panel sticky top-0 hidden max-h-screen w-60 shrink-0 flex-col border-r border-line/50 p-5 md:flex print:hidden">
         <Link href="/" aria-label="Mizan home" className="px-2">
           <Logo />
         </Link>
@@ -124,7 +124,7 @@ export function AppShell({
       </aside>
 
       <div className="flex-1">
-        <header className="flex h-14 items-center justify-between border-b border-line px-5 md:hidden print:hidden">
+        <header className="glass-panel sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line/50 px-5 md:hidden print:hidden">
           <Link href="/" aria-label="Mizan home">
             <Logo />
           </Link>
@@ -138,7 +138,7 @@ export function AppShell({
           </div>
         </header>
         <nav
-          className="flex gap-1 overflow-x-auto border-b border-line px-3 py-2 md:hidden print:hidden"
+          className="glass-panel sticky top-14 z-30 flex gap-1 overflow-x-auto border-b border-line/50 px-3 py-2 md:hidden print:hidden"
           aria-label="Portal mobile"
         >
           {PRIMARY.map((item) => (

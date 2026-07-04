@@ -26,7 +26,7 @@ export function UkCtaSection() {
                 setup free and locked founding pricing for life.
               </p>
             </div>
-            <div className="rounded-2xl bg-paper p-6 text-ink shadow-card">
+            <div className="rounded-3xl bg-paper p-6 text-ink shadow-card">
               <UkWaitlistForm />
             </div>
           </div>

@@ -27,7 +27,7 @@ export function CtaSection() {
                 pricing locked for life.
               </p>
             </div>
-            <div className="rounded-2xl bg-paper p-6 text-ink shadow-card">
+            <div className="rounded-3xl bg-paper p-6 text-ink shadow-card">
               <WaitlistForm />
             </div>
           </div>
