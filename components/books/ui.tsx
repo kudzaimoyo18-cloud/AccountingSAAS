@@ -13,9 +13,9 @@ export function CategoryBadge({ category, code }: { category: string | null; cod
   const isIncome = code?.startsWith(INCOME_PREFIX);
   const cls = isIncome
     ? "border-evergreen/30 bg-evergreen/10 text-evergreen"
-    : "border-brass/30 bg-brass/10 text-brass-deep";
+    : "border-line-strong bg-paper-dim text-ink";
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium ${cls}`}>
+    <span className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-0.5 text-xs font-medium ${cls}`}>
       <span className="tnum opacity-60">{code}</span>
       {category}
     </span>
@@ -25,7 +25,7 @@ export function CategoryBadge({ category, code }: { category: string | null; cod
 export function StatusPill({ status }: { status: string }) {
   const map: Record<string, string> = {
     posted: "border-evergreen/30 bg-evergreen/10 text-evergreen",
-    review: "border-brass/40 bg-brass/10 text-brass-deep",
+    review: "border-warning/40 bg-warning/10 text-warning",
     uncategorized: "border-line bg-paper-dim text-ink-soft",
   };
   const label: Record<string, string> = {
@@ -43,7 +43,7 @@ export function StatusPill({ status }: { status: string }) {
 export function ConfidenceMeter({ value }: { value: number | null }) {
   if (value == null) return null;
   const width = Math.round(value * 100);
-  const tone = value >= 0.8 ? "bg-evergreen" : value >= 0.6 ? "bg-brass" : "bg-danger";
+  const tone = value >= 0.8 ? "bg-evergreen" : value >= 0.6 ? "bg-warning" : "bg-danger";
   return (
     <span className="inline-flex items-center gap-2">
       <span className="h-1.5 w-16 overflow-hidden rounded-full bg-paper-dim">
