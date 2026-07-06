@@ -18,7 +18,7 @@ export function BooksTabs({ active }: { active: BooksTab; reviewCount?: number }
           href={tab.href}
           className={`relative rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
             active === tab.key
-              ? "bg-ink text-paper"
+              ? "bg-evergreen-soft text-evergreen"
               : "text-ink-soft hover:bg-paper-dim hover:text-ink"
           }`}
         >

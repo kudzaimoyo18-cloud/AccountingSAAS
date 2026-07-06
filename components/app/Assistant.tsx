@@ -58,10 +58,10 @@ export function Assistant({
             key={n.href + n.text}
             href={n.href}
             prefetch
-            className="flex items-center justify-between gap-3 rounded-2xl border border-brass/30 bg-brass/5 px-5 py-3.5 transition-colors hover:bg-brass/10"
+            className="flex items-center justify-between gap-3 rounded-xl border border-evergreen/25 bg-evergreen-soft px-5 py-3.5 transition-colors hover:border-evergreen/40"
           >
             <span className="text-sm text-ink">{n.text}</span>
-            <span className="whitespace-nowrap text-sm font-medium text-brass-deep">
+            <span className="whitespace-nowrap text-sm font-semibold text-evergreen">
               {n.cta} →
             </span>
           </Link>
@@ -80,7 +80,7 @@ export function Assistant({
         <div className="flex-1 space-y-3 overflow-y-auto p-5">
           {messages.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center text-center">
-              <p className="font-display text-lg font-medium">Ask me about your books</p>
+              <p className="text-lg font-semibold text-ink">Ask me about your books</p>
               <p className="mt-1 max-w-sm text-sm text-ink-soft">
                 I can explain your figures, VAT and tax, and walk you through what
                 needs doing.
@@ -91,7 +91,7 @@ export function Assistant({
                     key={s}
                     type="button"
                     onClick={() => send(s)}
-                    className="rounded-full border border-line px-3 py-1.5 text-xs text-ink-soft transition-colors hover:border-ink hover:text-ink"
+                    className="rounded-lg border border-line-strong px-3 py-1.5 text-xs text-ink-soft transition-colors hover:border-evergreen hover:text-evergreen"
                   >
                     {s}
                   </button>
@@ -107,7 +107,7 @@ export function Assistant({
                 <div
                   className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm ${
                     m.role === "user"
-                      ? "bg-ink text-paper"
+                      ? "bg-evergreen text-white"
                       : "border border-line bg-surface text-ink"
                   }`}
                 >
