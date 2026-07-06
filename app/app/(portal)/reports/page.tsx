@@ -24,13 +24,15 @@ export default async function ReportsPage() {
   const { tb, pnl, bs, tax, hasData } = await loadStatements(company.id);
 
   return (
-    <div className="mx-auto max-w-5xl">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="mx-auto max-w-6xl">
+      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-line pb-5">
         <div>
-          <p className="eyebrow">Filing-ready · double-entry</p>
-          <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">
-            Reports
-          </h1>
+          <nav className="breadcrumb" aria-label="Breadcrumb">
+            <span>Accounting</span>
+            <span aria-hidden>/</span>
+            <span className="text-ink">Reports</span>
+          </nav>
+          <h1 className="page-title mt-1.5 text-2xl">Financial statements</h1>
           <p className="mt-1 text-sm text-ink-soft">
             Built from your approved ledger lines (cash basis). Approve a line and
             it lands here automatically.
@@ -56,7 +58,7 @@ export default async function ReportsPage() {
       ) : (
         <>
           {/* Headline figures */}
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-kpis>
             <Kpi label="Revenue" value={money(pnl.totalIncome)} />
             <Kpi label="Expenses" value={money(pnl.totalExpense)} />
             <Kpi
@@ -154,38 +156,38 @@ export default async function ReportsPage() {
           </div>
 
           {/* Trial balance */}
-          <section className="mt-10">
-            <div className="flex items-baseline justify-between">
-              <h2 className="font-display text-xl font-medium">Trial balance</h2>
-              <span className="tnum text-xs text-ink-soft">
-                {tb.totalDebit === tb.totalCredit ? "✓ balanced" : "⚠ out of balance"}
+          <section className="panel mt-8">
+            <div className="panel-header">
+              <p className="panel-title">Trial balance</p>
+              <span className={`badge ${tb.totalDebit === tb.totalCredit ? "badge-positive" : "badge-danger"}`}>
+                {tb.totalDebit === tb.totalCredit ? "Balanced" : "Out of balance"}
               </span>
             </div>
-            <div className="mt-3 overflow-x-auto rounded-2xl border border-line bg-surface">
-              <table className="w-full min-w-[520px] text-sm">
+            <div className="overflow-x-auto">
+              <table className="data-table min-w-[560px]">
                 <thead>
-                  <tr className="border-b border-line text-left text-xs text-ink-soft">
-                    <th className="px-4 py-2 font-medium">Code</th>
-                    <th className="px-4 py-2 font-medium">Account</th>
-                    <th className="px-4 py-2 text-right font-medium">Debit</th>
-                    <th className="px-4 py-2 text-right font-medium">Credit</th>
+                  <tr>
+                    <th>Code</th>
+                    <th>Account</th>
+                    <th className="text-right">Debit</th>
+                    <th className="text-right">Credit</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-line">
+                <tbody>
                   {tb.rows.map((r) => (
                     <tr key={r.code}>
-                      <td className="tnum px-4 py-2 text-ink-soft">{r.code}</td>
-                      <td className="px-4 py-2">{r.name}</td>
-                      <td className="tnum px-4 py-2 text-right">{r.debit ? money(r.debit) : "—"}</td>
-                      <td className="tnum px-4 py-2 text-right">{r.credit ? money(r.credit) : "—"}</td>
+                      <td className="tnum text-ink-soft">{r.code}</td>
+                      <td>{r.name}</td>
+                      <td className="num">{r.debit ? money(r.debit) : "—"}</td>
+                      <td className="num">{r.credit ? money(r.credit) : "—"}</td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
-                  <tr className="border-t border-line font-medium">
-                    <td className="px-4 py-2" colSpan={2}>Total</td>
-                    <td className="tnum px-4 py-2 text-right">{money(tb.totalDebit)}</td>
-                    <td className="tnum px-4 py-2 text-right">{money(tb.totalCredit)}</td>
+                  <tr className="font-semibold">
+                    <td className="px-4 py-2.5" colSpan={2}>Total</td>
+                    <td className="tnum px-4 py-2.5 text-right">{money(tb.totalDebit)}</td>
+                    <td className="tnum px-4 py-2.5 text-right">{money(tb.totalCredit)}</td>
                   </tr>
                 </tfoot>
               </table>
@@ -213,11 +215,11 @@ function Kpi({
   tone?: "evergreen" | "danger";
 }) {
   return (
-    <div className="card">
-      <p className="text-xs uppercase tracking-[0.14em] text-ink-soft">{label}</p>
+    <div className="kpi">
+      <p className="kpi-label">{label}</p>
       <p
-        className={`tnum mt-2 font-display text-2xl font-semibold ${
-          tone === "evergreen" ? "text-evergreen" : tone === "danger" ? "text-danger" : ""
+        className={`kpi-value ${
+          tone === "evergreen" ? "text-evergreen" : tone === "danger" ? "text-danger" : "text-ink"
         }`}
       >
         AED {value}

@@ -20,18 +20,45 @@ const config: Config = {
           deep: "rgb(var(--brass-deep-rgb) / <alpha-value>)",
         },
         sand: "rgb(var(--sand-rgb) / <alpha-value>)",
-        evergreen: "rgb(var(--evergreen-rgb) / <alpha-value>)",
-        line: "rgb(var(--line-rgb) / <alpha-value>)",
+        evergreen: {
+          DEFAULT: "rgb(var(--evergreen-rgb) / <alpha-value>)",
+          deep: "rgb(var(--evergreen-deep-rgb) / <alpha-value>)",
+          soft: "rgb(var(--evergreen-soft-rgb) / <alpha-value>)",
+        },
+        line: {
+          DEFAULT: "rgb(var(--line-rgb) / <alpha-value>)",
+          strong: "rgb(var(--line-strong-rgb) / <alpha-value>)",
+        },
         danger: "rgb(var(--danger-rgb) / <alpha-value>)",
+        warning: "rgb(var(--warning-rgb) / <alpha-value>)",
+        positive: "rgb(var(--positive-rgb) / <alpha-value>)",
+        // dark workstation sidebar — fixed across light/dark themes
+        sidebar: {
+          DEFAULT: "rgb(var(--sidebar-rgb) / <alpha-value>)",
+          fg: "rgb(var(--sidebar-fg-rgb) / <alpha-value>)",
+          muted: "rgb(var(--sidebar-muted-rgb) / <alpha-value>)",
+          active: "rgb(var(--sidebar-active-rgb) / <alpha-value>)",
+          border: "rgb(var(--sidebar-border-rgb) / <alpha-value>)",
+        },
       },
       fontFamily: {
-        display: ["var(--font-display)", "serif"],
+        // display maps to the same sans — legacy `font-display` usages render
+        // as tight-tracked Inter instead of a serif.
+        display: ["var(--font-sans)", "system-ui", "sans-serif"],
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
       },
-      maxWidth: { shell: "78rem" },
+      maxWidth: { shell: "82rem" },
+      borderRadius: {
+        lg: "0.625rem",
+        xl: "0.75rem",
+        "2xl": "0.875rem",
+      },
       boxShadow: {
-        lift: "0 1px 2px rgba(0,0,0,0.06), 0 12px 32px -12px rgba(0,0,0,0.22)",
-        card: "0 1px 0 rgba(0,0,0,0.04), 0 24px 48px -28px rgba(0,0,0,0.28)",
+        // crisp, low, product-grade elevation — not the soft boutique float
+        xs: "0 1px 2px rgba(15,23,42,0.05)",
+        card: "0 1px 2px rgba(15,23,42,0.05), 0 1px 3px rgba(15,23,42,0.04)",
+        raised: "0 4px 12px -2px rgba(15,23,42,0.10), 0 2px 4px -2px rgba(15,23,42,0.06)",
+        lift: "0 10px 24px -8px rgba(15,23,42,0.18)",
       },
     },
   },
