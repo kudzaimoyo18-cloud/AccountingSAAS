@@ -3,66 +3,63 @@
 @tailwind utilities;
 
 :root {
-  /* LIGHT — warm bone paper + brass + ink */
-  --paper-rgb: 246 241 231;
-  --paper-dim-rgb: 239 231 216;
-  --surface-rgb: 251 247 238;
-  --ink-rgb: 28 29 33;
-  --ink-soft-rgb: 84 81 75;
-  --brass-rgb: 176 130 39;
+  /* LIGHT — evergreen ledger: cool paper canvas, white cards, slate ink,
+     evergreen as the primary action colour. Accounting software, not a magazine. */
+  --paper-rgb: 246 248 250;      /* app canvas #F6F8FA */
+  --paper-dim-rgb: 238 242 246;  /* subtle fills / zebra rows */
+  --surface-rgb: 255 255 255;    /* cards, tables, inputs */
+  --ink-rgb: 15 23 42;           /* slate-900 */
+  --ink-soft-rgb: 100 116 139;   /* slate-500 */
+  --brass-rgb: 176 130 39;       /* logo mark + rare accents only */
   --brass-deep-rgb: 138 100 24;
-  --sand-rgb: 227 214 189;
-  --evergreen-rgb: 47 107 79;
-  --line-rgb: 221 209 186;
-  --danger-rgb: 179 38 30;
+  --sand-rgb: 226 232 240;       /* slate-200 tint */
+  --evergreen-rgb: 47 107 79;    /* PRIMARY #2F6B4F */
+  --evergreen-deep-rgb: 33 82 60;/* hover / pressed */
+  --evergreen-soft-rgb: 233 243 238; /* tint bg for active/selected */
+  --line-rgb: 226 232 240;       /* slate-200 borders */
+  --line-strong-rgb: 203 213 225;/* slate-300 dividers */
+  --danger-rgb: 220 38 38;
+  --warning-rgb: 217 119 6;
+  --positive-rgb: 22 163 74;
 
-  /* raw values for inline CSS (gradients, svg strokes) */
-  --paper: rgb(var(--paper-rgb));
-  --ink: rgb(var(--ink-rgb));
-  --brass: rgb(var(--brass-rgb));
-  --evergreen: rgb(var(--evergreen-rgb));
+  /* dark workstation sidebar — same in light + dark */
+  --sidebar-rgb: 15 27 22;       /* deep evergreen-slate */
+  --sidebar-fg-rgb: 226 232 237;
+  --sidebar-muted-rgb: 130 148 140;
+  --sidebar-active-rgb: 32 52 43;
+  --sidebar-border-rgb: 32 45 39;
 
-  --font-display: "Fraunces", Georgia, serif;
-  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
 
-  --grain-color: rgba(28, 29, 33, 0.025);
-
-  /* glass tokens */
-  --glass-highlight: rgba(255, 255, 255, 0.45);
-  --glass-surface-a: 0.55;
-  --glass-surface-b: 0.4;
-  --aurora-brass: rgb(var(--brass-rgb) / 0.26);
-  --aurora-evergreen: rgb(var(--evergreen-rgb) / 0.18);
-  --aurora-sand: rgb(var(--sand-rgb) / 0.65);
-  --ledger-rule: rgb(var(--brass-rgb) / 0.07);
-  --ledger-margin: rgb(var(--brass-rgb) / 0.14);
+  --ring: 47 107 79;
 }
 
 .dark {
-  /* DARK — deep ink, warm bone text, brass glows brighter */
-  --paper-rgb: 19 20 24;
-  --paper-dim-rgb: 26 27 32;
-  --surface-rgb: 31 32 38;
-  --ink-rgb: 240 235 224;
-  --ink-soft-rgb: 168 163 152;
+  /* DARK — slate workstation */
+  --paper-rgb: 9 13 20;
+  --paper-dim-rgb: 17 23 33;
+  --surface-rgb: 20 27 38;
+  --ink-rgb: 226 232 240;
+  --ink-soft-rgb: 148 163 184;
   --brass-rgb: 198 152 60;
   --brass-deep-rgb: 214 170 84;
-  --sand-rgb: 58 54 44;
-  --evergreen-rgb: 92 168 134;
-  --line-rgb: 53 54 62;
-  --danger-rgb: 232 110 100;
+  --sand-rgb: 40 51 66;
+  --evergreen-rgb: 74 158 118;
+  --evergreen-deep-rgb: 96 178 138;
+  --evergreen-soft-rgb: 24 40 33;
+  --line-rgb: 34 45 61;
+  --line-strong-rgb: 48 62 82;
+  --danger-rgb: 239 110 100;
+  --warning-rgb: 234 160 70;
+  --positive-rgb: 74 190 130;
 
-  --grain-color: rgba(240, 235, 224, 0.02);
+  --sidebar-rgb: 7 11 16;
+  --sidebar-fg-rgb: 214 224 233;
+  --sidebar-muted-rgb: 120 138 156;
+  --sidebar-active-rgb: 20 32 43;
+  --sidebar-border-rgb: 24 34 47;
 
-  /* glass tokens — dark: highlight dims, glass gets moodier, aurora glows */
-  --glass-highlight: rgba(255, 255, 255, 0.08);
-  --glass-surface-a: 0.5;
-  --glass-surface-b: 0.34;
-  --aurora-brass: rgb(var(--brass-rgb) / 0.3);
-  --aurora-evergreen: rgb(var(--evergreen-rgb) / 0.2);
-  --aurora-sand: rgb(var(--sand-rgb) / 0.6);
-  --ledger-rule: rgb(var(--brass-rgb) / 0.09);
-  --ledger-margin: rgb(var(--brass-rgb) / 0.18);
+  --ring: 96 178 138;
 }
 
 * { border-color: rgb(var(--line-rgb)); }
@@ -73,140 +70,120 @@ body {
   background-color: rgb(var(--paper-rgb));
   color: rgb(var(--ink-rgb));
   font-family: var(--font-sans);
+  font-feature-settings: "cv05", "ss01";
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  /* ledger sheet + warm aurora: crisp brass rules and saturated blobs give
-     the glass panels real detail to frost — layered under the paper grain */
-  background-image:
-    radial-gradient(var(--grain-color) 1px, transparent 1px),
-    linear-gradient(to right, transparent 71px, var(--ledger-margin) 71px 72.5px, transparent 72.5px),
-    repeating-linear-gradient(to bottom, transparent 0 27px, var(--ledger-rule) 27px 28px),
-    radial-gradient(30rem 30rem at 12% -6%, var(--aurora-brass), transparent 60%),
-    radial-gradient(26rem 26rem at 88% 10%, var(--aurora-evergreen), transparent 58%),
-    radial-gradient(20rem 20rem at 38% 44%, rgb(var(--brass-rgb) / 0.12), transparent 60%),
-    radial-gradient(44rem 38rem at 60% 108%, var(--aurora-sand), transparent 65%);
-  background-size: 4px 4px, 100% 100%, 100% 56px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
-  background-attachment: scroll, scroll, scroll, fixed, fixed, fixed, fixed;
-  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 /* accounting numerals: lining + tabular everywhere numbers align */
 .tnum { font-variant-numeric: lining-nums tabular-nums; }
 
+@layer base {
+  h1, h2, h3, h4 { letter-spacing: -0.011em; }
+}
+
 @layer components {
   .shell { @apply mx-auto w-full max-w-shell px-6 sm:px-8; }
 
   .eyebrow {
-    @apply inline-flex items-center gap-2 text-[0.72rem] font-medium uppercase tracking-[0.18em] text-brass-deep;
+    @apply inline-flex items-center gap-2 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-ink-soft;
   }
 
+  /* ---- buttons ---- */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-full bg-ink px-6 py-3 text-sm font-medium text-paper
-           transition-all duration-200 hover:opacity-90 hover:-translate-y-0.5 hover:shadow-lift
-           focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass
-           disabled:cursor-not-allowed disabled:opacity-60;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-evergreen px-4 py-2.5 text-sm font-semibold text-white
+           shadow-xs transition-colors duration-150 hover:bg-evergreen-deep
+           focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-evergreen
+           disabled:cursor-not-allowed disabled:opacity-50;
   }
-
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-full border border-line/70 px-6 py-3 text-sm font-medium text-ink
-           transition-all duration-200 hover:border-ink hover:-translate-y-0.5
-           focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brass;
-    background: rgb(var(--surface-rgb) / 0.4);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-line-strong bg-surface px-4 py-2.5 text-sm font-semibold text-ink
+           shadow-xs transition-colors duration-150 hover:bg-paper-dim
+           focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-evergreen;
   }
+  .btn-sm { @apply px-3 py-1.5 text-[0.8rem]; }
 
-  /* frosted ledger card — the core glass surface */
+  /* ---- surfaces ---- */
   .card {
-    @apply rounded-3xl border p-7 shadow-card;
-    border-color: rgb(var(--line-rgb) / 0.55);
-    background: linear-gradient(
-      165deg,
-      rgb(var(--surface-rgb) / var(--glass-surface-a)),
-      rgb(var(--surface-rgb) / var(--glass-surface-b))
-    );
-    -webkit-backdrop-filter: blur(18px) saturate(1.35);
-    backdrop-filter: blur(18px) saturate(1.35);
-    box-shadow:
-      inset 0 1px 0 0 var(--glass-highlight),
-      0 1px 0 rgba(0, 0, 0, 0.04),
-      0 24px 48px -28px rgba(0, 0, 0, 0.28);
+    @apply rounded-xl border border-line bg-surface p-6 shadow-card;
   }
-
-  /* chrome surfaces: sidebars, sticky navs, mobile headers */
-  .glass-panel {
-    background: linear-gradient(
-      180deg,
-      rgb(var(--surface-rgb) / calc(var(--glass-surface-a) + 0.12)),
-      rgb(var(--surface-rgb) / var(--glass-surface-a))
-    );
-    -webkit-backdrop-filter: blur(20px) saturate(1.3);
-    backdrop-filter: blur(20px) saturate(1.3);
-    box-shadow: inset 0 1px 0 0 var(--glass-highlight);
+  /* section card with a header rule — the workstation panel */
+  .panel {
+    @apply rounded-xl border border-line bg-surface shadow-card;
   }
+  .panel-header {
+    @apply flex items-center justify-between gap-3 border-b border-line px-5 py-3.5;
+  }
+  .panel-title {
+    @apply text-sm font-semibold text-ink;
+  }
+  .panel-body { @apply p-5; }
 
+  /* ---- inputs ---- */
   .field {
-    @apply w-full rounded-2xl border px-4 py-3 text-sm text-ink placeholder:text-ink-soft/60
-           focus:border-brass focus:outline-none focus:ring-2 focus:ring-brass/20;
-    border-color: rgb(var(--line-rgb) / 0.7);
-    background: rgb(var(--paper-rgb) / 0.65);
-    -webkit-backdrop-filter: blur(8px);
-    backdrop-filter: blur(8px);
+    @apply w-full rounded-lg border border-line-strong bg-surface px-3.5 py-2.5 text-sm text-ink placeholder:text-ink-soft/60
+           shadow-xs transition-colors focus:border-evergreen focus:outline-none focus:ring-2 focus:ring-evergreen/25;
+  }
+  .label {
+    @apply mb-1.5 block text-[0.8rem] font-medium text-ink;
   }
 
-  .sidebar-link {
-    @apply flex items-center gap-3 rounded-2xl px-4 py-2.5 text-sm font-medium text-ink-soft transition-colors
-           hover:text-ink;
+  /* ---- KPI tile ---- */
+  .kpi {
+    @apply rounded-xl border border-line bg-surface px-5 py-4 shadow-card;
   }
-  .sidebar-link:hover {
-    background: rgb(var(--paper-dim-rgb) / 0.75);
+  .kpi-label {
+    @apply text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-ink-soft;
+  }
+  .kpi-value {
+    @apply tnum mt-1.5 text-2xl font-semibold tracking-tight text-ink;
+  }
+
+  /* ---- data table ---- */
+  .data-table { @apply w-full text-sm; }
+  .data-table thead th {
+    @apply sticky top-0 z-10 border-b border-line-strong bg-paper-dim px-4 py-2.5 text-left text-[0.72rem] font-semibold uppercase tracking-[0.06em] text-ink-soft;
+  }
+  .data-table tbody td { @apply border-b border-line px-4 py-2.5 text-ink; }
+  .data-table tbody tr:hover td { @apply bg-paper-dim/60; }
+  .data-table .num { @apply tnum text-right; }
+
+  /* ---- page header ---- */
+  .page-title { @apply text-xl font-semibold tracking-tight text-ink; }
+  .breadcrumb { @apply flex items-center gap-1.5 text-[0.8rem] text-ink-soft; }
+
+  /* ---- sidebar nav ---- */
+  .nav-group-label {
+    @apply px-3 pb-1.5 pt-4 text-[0.66rem] font-semibold uppercase tracking-[0.12em] text-sidebar-muted;
+  }
+  .sidebar-link {
+    @apply flex items-center gap-2.5 rounded-lg px-3 py-2 text-[0.86rem] font-medium text-sidebar-fg/80 transition-colors
+           hover:bg-sidebar-active hover:text-sidebar-fg;
   }
   .sidebar-link-active {
-    @apply text-ink;
-    background: rgb(var(--paper-dim-rgb) / 0.85);
-    box-shadow: inset 0 1px 0 0 var(--glass-highlight);
+    @apply bg-sidebar-active text-white;
+    box-shadow: inset 2px 0 0 0 rgb(var(--evergreen-rgb));
   }
 
+  /* ---- badges ---- */
   .badge {
-    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium;
+    @apply inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium;
   }
-}
-
-/* browsers without backdrop-filter get near-opaque surfaces so text stays readable */
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .card,
-  .glass-panel {
-    background: rgb(var(--surface-rgb) / 0.96);
-  }
-  .field {
-    background: rgb(var(--paper-rgb) / 0.96);
-  }
-  .btn-ghost {
-    background: rgb(var(--surface-rgb) / 0.9);
-  }
-}
-
-/* users who ask for less transparency get solid surfaces */
-@media (prefers-reduced-transparency: reduce) {
-  .card,
-  .glass-panel,
-  .field,
-  .btn-ghost {
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    background: rgb(var(--surface-rgb) / 0.98);
-  }
+  .badge-positive { @apply bg-positive/10 text-positive; }
+  .badge-warning { @apply bg-warning/10 text-warning; }
+  .badge-danger { @apply bg-danger/10 text-danger; }
+  .badge-neutral { @apply bg-paper-dim text-ink-soft; }
 }
 
 @keyframes rise {
-  from { opacity: 0; transform: translateY(14px); }
+  from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.rise { animation: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.rise-1 { animation-delay: 0.05s; }
-.rise-2 { animation-delay: 0.12s; }
-.rise-3 { animation-delay: 0.2s; }
-.rise-4 { animation-delay: 0.28s; }
+.rise { animation: rise 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.rise-1 { animation-delay: 0.04s; }
+.rise-2 { animation-delay: 0.08s; }
+.rise-3 { animation-delay: 0.12s; }
+.rise-4 { animation-delay: 0.16s; }
 
 /* indeterminate import progress bar */
 @keyframes mzIndeterminate {

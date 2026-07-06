@@ -1,4 +1,10 @@
-export function Logo({ className = "" }: { className?: string }) {
+export function Logo({
+  className = "",
+  onDark = false,
+}: {
+  className?: string;
+  onDark?: boolean;
+}) {
   return (
     <span className={`inline-flex items-center gap-2.5 ${className}`}>
       <svg
@@ -7,7 +13,7 @@ export function Logo({ className = "" }: { className?: string }) {
         viewBox="0 0 26 26"
         fill="none"
         aria-hidden="true"
-        className="text-brass-deep"
+        className="text-brass"
       >
         {/* balance scale — the mizan */}
         <path
@@ -29,7 +35,7 @@ export function Logo({ className = "" }: { className?: string }) {
           strokeLinejoin="round"
         />
       </svg>
-      <span className="font-display text-xl font-semibold tracking-tight text-ink">
+      <span className={`text-xl font-semibold tracking-tight ${onDark ? "text-sidebar-fg" : "text-ink"}`}>
         Mizan
       </span>
     </span>

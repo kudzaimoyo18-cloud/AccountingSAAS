@@ -78,62 +78,87 @@ export default async function OverviewPage() {
   const doneCount = checklist.filter((c) => c.done).length;
 
   return (
-    <div className="mx-auto max-w-4xl">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="mx-auto max-w-6xl">
+      {/* page header */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-5">
         <div>
-          <h1 className="font-display text-3xl font-semibold tracking-tight">
-            {company.name}
-          </h1>
+          <nav className="breadcrumb" aria-label="Breadcrumb">
+            <span>Overview</span>
+            <span aria-hidden>/</span>
+            <span className="text-ink">Dashboard</span>
+          </nav>
+          <div className="mt-1.5 flex items-center gap-3">
+            <h1 className="page-title text-2xl">{company.name}</h1>
+            <StatusBadge status={company.status} />
+          </div>
           <p className="mt-1 text-sm text-ink-soft">
             {company.freeZone ?? "UAE"} · {company.plan} plan
           </p>
         </div>
-        <StatusBadge status={company.status} />
+        <Link href="/app/documents" className="btn-primary">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden>
+            <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+          Upload document
+        </Link>
       </div>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-3">
-        <Kpi label="Net profit" value={hasData ? `AED ${money(pnl.netProfit)}` : "—"} />
-        <Kpi label="VAT due" value={hasData ? `AED ${money(tax.vat.net)}` : "—"} />
-        <Kpi label="To review" value={String(toReview)} />
+      {/* KPI row */}
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Kpi label="Net profit" value={hasData ? `AED ${money(pnl.netProfit)}` : "—"} tone={hasData && pnl.netProfit < 0 ? "danger" : "positive"} />
+        <Kpi label="VAT due (5%)" value={hasData ? `AED ${money(tax.vat.net)}` : "—"} />
+        <Kpi label="To review" value={String(toReview)} tone={toReview > 0 ? "warning" : undefined} />
+        <Kpi label="Documents" value={String(docs)} />
       </div>
 
-      <div className="mt-10 flex items-baseline justify-between">
-        <h2 className="font-display text-xl font-medium">Getting started</h2>
-        <span className="tnum text-sm text-ink-soft">
-          {doneCount} of {checklist.length} done
-        </span>
-      </div>
-      {/* progress bar */}
-      <div className="mt-3 flex h-1.5 w-full overflow-hidden rounded-full bg-paper-dim" aria-hidden>
-        <div
-          className="bg-evergreen transition-all"
-          style={{ width: `${(doneCount / checklist.length) * 100}%` }}
-        />
-      </div>
-
-      <div className="mt-4 grid gap-3">
-        {checklist.map((c) => (
-          <Step key={c.title} {...c} />
-        ))}
-        {toReview > 0 && (
-          <Step
-            href="/app/books/ledger"
-            title={`Review ${toReview} pending ledger line${toReview === 1 ? "" : "s"}`}
-            body="Lines waiting for your check before they hit the books."
-            cta="Review now"
-            done={false}
+      {/* getting started panel */}
+      <div className="panel mt-8">
+        <div className="panel-header">
+          <p className="panel-title">Getting started</p>
+          <span className="tnum text-[0.8rem] text-ink-soft">
+            {doneCount} of {checklist.length} done
+          </span>
+        </div>
+        <div className="h-1 w-full bg-paper-dim" aria-hidden>
+          <div
+            className="h-full bg-evergreen transition-all"
+            style={{ width: `${(doneCount / checklist.length) * 100}%` }}
           />
-        )}
+        </div>
+        <div className="divide-y divide-line">
+          {checklist.map((c) => (
+            <Step key={c.title} {...c} />
+          ))}
+          {toReview > 0 && (
+            <Step
+              href="/app/books/ledger"
+              title={`Review ${toReview} pending ledger line${toReview === 1 ? "" : "s"}`}
+              body="Lines waiting for your check before they hit the books."
+              cta="Review now"
+              done={false}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
-function Kpi({ label, value }: { label: string; value: string }) {
+function Kpi({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: "positive" | "danger" | "warning";
+}) {
+  const toneClass =
+    tone === "danger" ? "text-danger" : tone === "warning" ? "text-warning" : tone === "positive" ? "text-evergreen" : "text-ink";
   return (
-    <div className="card">
-      <p className="text-xs uppercase tracking-[0.14em] text-ink-soft">{label}</p>
-      <p className="tnum mt-2 font-display text-3xl font-semibold">{value}</p>
+    <div className="kpi">
+      <p className="kpi-label">{label}</p>
+      <p className={`kpi-value ${toneClass}`}>{value}</p>
     </div>
   );
 }
@@ -155,30 +180,26 @@ function Step({
     <Link
       href={href}
       prefetch
-      className={`flex items-center justify-between gap-4 rounded-2xl border px-5 py-4 transition-colors ${
-        done
-          ? "border-evergreen/25 bg-evergreen/5"
-          : "border-line bg-surface hover:border-ink/30"
-      }`}
+      className="flex items-center justify-between gap-4 px-5 py-3.5 transition-colors hover:bg-paper-dim/60"
     >
       <div className="flex items-start gap-3">
         <span
           className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full text-[0.7rem] ${
-            done ? "bg-evergreen text-paper" : "border border-line text-ink-soft"
+            done ? "bg-evergreen text-white" : "border border-line-strong text-ink-soft"
           }`}
           aria-hidden
         >
           {done ? "✓" : ""}
         </span>
         <div>
-          <p className={`font-medium ${done ? "text-ink-soft line-through decoration-evergreen/40" : ""}`}>
+          <p className={`text-sm font-medium ${done ? "text-ink-soft line-through decoration-evergreen/40" : "text-ink"}`}>
             {title}
           </p>
-          <p className="mt-0.5 text-sm text-ink-soft">{body}</p>
+          <p className="mt-0.5 text-[0.82rem] text-ink-soft">{body}</p>
         </div>
       </div>
       {!done && (
-        <span className="whitespace-nowrap text-sm font-medium text-brass-deep">
+        <span className="whitespace-nowrap text-[0.82rem] font-semibold text-evergreen">
           {cta} →
         </span>
       )}
