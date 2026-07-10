@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { signOut } from "@/lib/actions";
+import { MobileTabBar } from "@/components/app/MobileTabBar";
+import { AssistantFab } from "@/components/app/AssistantFab";
 
 type Item = { href: string; label: string; icon: string; exact?: boolean };
 type Group = { label: string; items: Item[] };
@@ -47,7 +49,6 @@ const BOTTOM: Item[] = [
   { href: "/app/settings", label: "Settings", icon: "M8 5.5A2.5 2.5 0 1 0 8 10.5 2.5 2.5 0 0 0 8 5.5zM8 1v2M8 13v2M15 8h-2M3 8H1M12.95 3.05l-1.4 1.4M4.46 11.54l-1.41 1.41M12.95 12.95l-1.4-1.4M4.46 4.46 3.05 3.05" },
 ];
 
-const ALL_FLAT: Item[] = [...GROUPS.flatMap((g) => g.items), ...BOTTOM];
 
 function useIsActive() {
   const pathname = usePathname();
@@ -144,40 +145,23 @@ export function AppShell({
 
       {/* content column */}
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* mobile top bar */}
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line bg-surface px-4 md:hidden print:hidden">
+        {/* mobile top bar — logo only; navigation lives in the bottom tab bar */}
+        <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line bg-surface/95 px-4 backdrop-blur-md md:hidden print:hidden">
           <Link href="/" aria-label="Mizan home">
             <Logo />
           </Link>
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            <form action={signOut}>
-              <button type="submit" className="text-sm font-medium text-ink-soft">Sign out</button>
-            </form>
-          </div>
+          <ThemeToggle />
         </header>
-        {/* mobile horizontal nav */}
-        <nav
-          className="sticky top-14 z-20 flex gap-1 overflow-x-auto border-b border-line bg-surface px-3 py-2 md:hidden print:hidden"
-          aria-label="Portal mobile"
-        >
-          {ALL_FLAT.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              prefetch
-              aria-current={isActive(item) ? "page" : undefined}
-              className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-[0.82rem] font-medium transition-colors ${
-                isActive(item) ? "bg-evergreen-soft text-evergreen" : "text-ink-soft hover:bg-paper-dim hover:text-ink"
-              }`}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
 
-        <main className="flex-1 p-5 sm:p-8">{children}</main>
+        {/* bottom padding on mobile so content clears the fixed tab bar */}
+        <main className="flex-1 p-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:p-8 md:pb-8">
+          {children}
+        </main>
       </div>
+
+      {/* mobile bottom navigation + floating assistant */}
+      <MobileTabBar isAdmin={isAdmin} />
+      <AssistantFab />
     </div>
   );
 }
