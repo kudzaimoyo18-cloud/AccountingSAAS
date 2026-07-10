@@ -226,8 +226,18 @@ export async function setLedgerStatus(formData: FormData) {
 
   const id = String(formData.get("id") ?? "");
   const status = String(formData.get("status") ?? "");
+
+  // Optional return path so mobile flows (e.g. /app/capture) can stay in place
+  // after approving. Only same-app relative paths are honoured — never a full
+  // URL or protocol-relative path (open-redirect guard).
+  const nextRaw = String(formData.get("next") ?? "");
+  const back =
+    nextRaw.startsWith("/app") && !nextRaw.startsWith("//") ? nextRaw : LEDGER;
+  const backWith = (msg: string) =>
+    `${back}${back.includes("?") ? "&" : "?"}${msg}`;
+
   if (!id || !STATUSES.includes(status as (typeof STATUSES)[number])) {
-    redirect(LEDGER);
+    redirect(back);
   }
 
   // Need the current row: its date (period lock) and its status (to revert to if
@@ -238,11 +248,11 @@ export async function setLedgerStatus(formData: FormData) {
     .eq("id", id)
     .eq("company_id", company.id)
     .maybeSingle();
-  if (!entry) redirect(LEDGER);
+  if (!entry) redirect(back);
   const prev = entry as { entry_date: string | null; status: string };
 
   if (await isDateInClosedPeriod(supabase, company.id, prev.entry_date)) {
-    redirect(`${LEDGER}?error=That+line+is+in+a+closed+period`);
+    redirect(backWith("error=That+line+is+in+a+closed+period"));
   }
 
   const { error } = await supabase
@@ -252,7 +262,7 @@ export async function setLedgerStatus(formData: FormData) {
     .eq("company_id", company.id);
   if (error) {
     console.error("[books/setLedgerStatus]", error.message);
-    redirect(`${LEDGER}?error=Could+not+update+status`);
+    redirect(backWith("error=Could+not+update+status"));
   }
 
   const res = await syncJournalForEntry(supabase, company.id, id);
@@ -265,12 +275,13 @@ export async function setLedgerStatus(formData: FormData) {
       .eq("company_id", company.id);
     revalidatePath(LEDGER);
     revalidatePath("/app/reports");
-    redirect(`${LEDGER}?error=Could+not+post+this+line+—+approval+reverted,+please+retry`);
+    redirect(backWith("error=Could+not+post+this+line+—+approval+reverted,+please+retry"));
   }
 
   revalidatePath(LEDGER);
+  revalidatePath("/app/capture");
   revalidatePath("/app/reports");
-  redirect(LEDGER);
+  redirect(back);
 }
 
 // --- Add a line by hand ------------------------------------------------------

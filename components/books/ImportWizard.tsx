@@ -60,7 +60,7 @@ export function ImportWizard() {
           accept=".csv,text/csv"
           required
           onChange={handleFile}
-          className="block w-full text-sm text-ink-soft file:mr-4 file:rounded-lg file:border-0 file:bg-ink file:px-4 file:py-2 file:text-sm file:font-medium file:text-paper hover:file:bg-ink/90"
+          className="block w-full text-sm text-ink-soft file:mr-4 file:rounded-lg file:border-0 file:bg-evergreen file:px-4 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-evergreen-deep"
         />
         <p className="mt-2 text-xs text-ink-soft">
           Export a statement from your bank as CSV. We read the columns in your browser — nothing is
@@ -179,7 +179,7 @@ function SubmitBar({ ready, rowCount }: { ready: boolean; rowCount: number }) {
   return (
     <div className="space-y-2.5" role="status" aria-live="polite" aria-busy="true">
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-line/60">
-        <div className="mz-indeterminate h-full w-1/3 rounded-full bg-brass" />
+        <div className="mz-indeterminate h-full w-1/3 rounded-full bg-evergreen" />
       </div>
       <p className="text-sm text-ink-soft">
         {IMPORT_STAGES[stage]}

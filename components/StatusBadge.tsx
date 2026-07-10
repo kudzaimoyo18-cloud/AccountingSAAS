@@ -1,15 +1,15 @@
 const STYLES: Record<string, string> = {
   filed: "bg-evergreen/10 text-evergreen",
-  in_progress: "bg-brass/10 text-brass-deep",
+  in_progress: "bg-warning/10 text-warning",
   upcoming: "bg-paper-dim text-ink-soft",
   overdue: "bg-danger/10 text-danger",
-  new: "bg-brass/10 text-brass-deep",
+  new: "bg-warning/10 text-warning",
   processed: "bg-evergreen/10 text-evergreen",
   active: "bg-evergreen/10 text-evergreen",
-  onboarding: "bg-brass/10 text-brass-deep",
+  onboarding: "bg-warning/10 text-warning",
   paused: "bg-paper-dim text-ink-soft",
   draft: "bg-paper-dim text-ink-soft",
-  reviewed: "bg-brass/10 text-brass-deep",
+  reviewed: "bg-warning/10 text-warning",
   approved: "bg-evergreen/10 text-evergreen",
 };
 

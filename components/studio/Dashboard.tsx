@@ -26,10 +26,10 @@ export function Dashboard({ onGoReview }: { onGoReview: () => void }) {
       {reports.reviewCount > 0 && (
         <button
           onClick={onGoReview}
-          className="flex w-full items-center justify-between gap-3 rounded-2xl border border-brass/40 bg-brass/5 px-5 py-3 text-left transition-colors hover:bg-brass/10"
+          className="flex w-full items-center justify-between gap-3 rounded-xl border border-warning/40 bg-warning/5 px-5 py-3 text-left transition-colors hover:bg-warning/10"
         >
           <span className="flex items-center gap-3 text-sm">
-            <span className="grid h-7 w-7 place-items-center rounded-full bg-brass/15 text-brass-deep">
+            <span className="tnum grid h-7 w-7 place-items-center rounded-lg bg-warning/15 text-warning">
               {reports.reviewCount}
             </span>
             <span>
@@ -37,7 +37,7 @@ export function Dashboard({ onGoReview }: { onGoReview: () => void }) {
               <span className="text-ink-soft"> — everything else is auto-posted.</span>
             </span>
           </span>
-          <span className="text-sm font-medium text-brass-deep">Review →</span>
+          <span className="text-sm font-semibold text-warning">Review →</span>
         </button>
       )}
 
@@ -108,8 +108,8 @@ export function Dashboard({ onGoReview }: { onGoReview: () => void }) {
             <p className="eyebrow">Next filing</p>
             <p className="mt-2 font-medium">{cfg.nextDeadline.label}</p>
             <p className="tnum mt-1 text-sm text-ink-soft">{longDate(cfg.nextDeadline.date, region)}</p>
-            <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-brass-deep">
-              <span className="h-1.5 w-1.5 rounded-full bg-brass" />
+            <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-ink-soft">
+              <span className="h-1.5 w-1.5 rounded-full bg-evergreen" />
               {cfg.filingAuthority}
             </p>
           </div>
@@ -176,7 +176,7 @@ function PnlRow({
   bar: number;
   tone: "income" | "expense";
 }) {
-  const color = tone === "income" ? "bg-evergreen" : "bg-brass";
+  const color = tone === "income" ? "bg-evergreen" : "bg-ink-soft";
   return (
     <div>
       <div className="flex items-center justify-between text-sm">

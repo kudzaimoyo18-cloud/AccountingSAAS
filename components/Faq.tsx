@@ -7,19 +7,19 @@ export function Faq() {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="border-t border-line bg-paper-dim/50 py-20 lg:py-28">
+    <section id="faq" className="border-t border-line bg-paper py-20 lg:py-24">
       <div className="shell grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
         <div>
           <p className="eyebrow">
-            <span className="h-px w-6 bg-brass-deep" />
+            <span className="h-1.5 w-1.5 rounded-full bg-evergreen" />
             Questions
           </p>
-          <h2 className="mt-5 font-display text-[clamp(1.9rem,1rem+3vw,3rem)] font-semibold leading-tight tracking-[-0.02em]">
+          <h2 className="mt-4 text-[clamp(1.8rem,1rem+2.6vw,2.6rem)] font-semibold leading-tight tracking-tight text-ink">
             Straight answers.
           </h2>
           <p className="mt-5 text-ink-soft">
             Still unsure?{" "}
-            <a href="#waitlist" className="text-brass-deep underline underline-offset-4">
+            <a href="#waitlist" className="font-medium text-evergreen underline underline-offset-4">
               Ask us directly
             </a>
             .
@@ -37,10 +37,10 @@ export function Faq() {
                   aria-expanded={isOpen}
                   className="flex w-full items-center justify-between gap-4 py-5 text-left"
                 >
-                  <span className="font-display text-lg font-medium">{item.q}</span>
+                  <span className="text-base font-semibold text-ink">{item.q}</span>
                   <span
-                    className={`grid h-7 w-7 shrink-0 place-items-center rounded-full border border-line transition-transform duration-200 ${
-                      isOpen ? "rotate-45 border-brass text-brass-deep" : "text-ink-soft"
+                    className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg border transition-transform duration-200 ${
+                      isOpen ? "rotate-45 border-evergreen bg-evergreen-soft text-evergreen" : "border-line-strong text-ink-soft"
                     }`}
                     aria-hidden
                   >
