@@ -14,6 +14,9 @@ import {
 } from "@/lib/books/ledger-actions";
 
 export const metadata = { title: "Ledger — Mizan" };
+// "Extract with AI" downloads the document and runs Claude extraction — allow
+// up to 60s so large receipts/statements don't hit the default timeout.
+export const maxDuration = 60;
 
 const DIRECTIONS = [
   { value: "income", label: "Income" },

@@ -1,0 +1,194 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { getActiveCompany } from "@/lib/books/repo";
+import { approveCapturedLine } from "@/lib/books/capture-actions";
+import { CaptureUpload } from "@/components/app/CaptureUpload";
+
+export const metadata = { title: "Snap receipt — Mizan" };
+export const dynamic = "force-dynamic";
+// Photo upload + AI extraction can exceed the platform's default function
+// timeout, especially on mobile networks — allow up to 60s.
+export const maxDuration = 60;
+
+function money(n: number) {
+  return n.toLocaleString("en-AE", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+type Line = {
+  id: string;
+  entry_date: string | null;
+  description: string;
+  counterparty: string | null;
+  category: string;
+  direction: "income" | "expense";
+  currency: string;
+  amount: number;
+  vat_amount: number;
+  confidence: number | null;
+  status: string;
+};
+
+export default async function CapturePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ doc?: string; error?: string; warn?: string }>;
+}) {
+  const company = await getActiveCompany();
+  if (!company) redirect("/app/onboarding");
+
+  const { doc, error, warn } = await searchParams;
+
+  // Review step: the lines the AI drafted from this photo (RLS scopes to owner).
+  let lines: Line[] = [];
+  if (doc) {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("ledger_entries")
+      .select(
+        "id, entry_date, description, counterparty, category, direction, currency, amount, vat_amount, confidence, status",
+      )
+      .eq("company_id", company.id)
+      .eq("document_id", doc)
+      .order("created_at", { ascending: true });
+    lines = (data as Line[]) ?? [];
+  }
+
+  const pendingLines = lines.filter((l) => l.status !== "approved");
+  const approvedLines = lines.filter((l) => l.status === "approved");
+
+  return (
+    <div className="mx-auto max-w-lg">
+      <div className="border-b border-line pb-5">
+        <nav className="breadcrumb" aria-label="Breadcrumb">
+          <span>Bookkeeping</span>
+          <span aria-hidden>/</span>
+          <span className="text-ink">Snap receipt</span>
+        </nav>
+        <h1 className="page-title mt-1.5 text-2xl">Capture</h1>
+        <p className="mt-1 text-sm text-ink-soft">
+          Photograph a receipt or invoice — Mizan drafts the books, you approve.
+        </p>
+      </div>
+
+      {error && (
+        <p className="mt-4 rounded-lg border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger">
+          {error}
+        </p>
+      )}
+      {warn && (
+        <p className="mt-4 rounded-lg border border-warning/30 bg-warning/5 px-4 py-3 text-sm text-warning">
+          {warn}
+        </p>
+      )}
+
+      <div className="mt-6">
+        <CaptureUpload />
+      </div>
+
+      {lines.length > 0 && (
+        <section className="mt-8">
+          <h2 className="text-sm font-semibold text-ink">
+            {pendingLines.length > 0
+              ? `Drafted from your photo — approve to post`
+              : `All posted to your books ✓`}
+          </h2>
+
+          <div className="mt-3 space-y-3">
+            {pendingLines.map((l) => (
+              <article key={l.id} className="panel p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-ink">
+                      {l.description || "Untitled line"}
+                    </p>
+                    <p className="mt-0.5 text-[0.8rem] text-ink-soft">
+                      {[l.counterparty, l.entry_date, l.category.replace(/_/g, " ")]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p
+                      className={`tnum text-base font-semibold ${
+                        l.direction === "income" ? "text-evergreen" : "text-ink"
+                      }`}
+                    >
+                      {l.direction === "income" ? "+" : "−"}
+                      {l.currency} {money(l.amount)}
+                    </p>
+                    {l.vat_amount > 0 && (
+                      <p className="tnum text-[0.75rem] text-ink-soft">
+                        VAT {money(l.vat_amount)}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {typeof l.confidence === "number" && (
+                  <p className="mt-2 text-[0.75rem] text-ink-soft">
+                    AI confidence {Math.round(l.confidence * 100)}%
+                  </p>
+                )}
+
+                <div className="mt-3 flex items-center gap-2">
+                  <form action={approveCapturedLine} className="flex-1">
+                    <input type="hidden" name="id" value={l.id} />
+                    <input type="hidden" name="next" value={`/app/capture?doc=${doc}`} />
+                    <button type="submit" className="btn-primary w-full">
+                      Approve — post to books
+                    </button>
+                  </form>
+                  <Link
+                    href="/app/books/ledger"
+                    className="btn-ghost btn-sm shrink-0"
+                    title="Edit details in the ledger"
+                  >
+                    Edit
+                  </Link>
+                </div>
+              </article>
+            ))}
+
+            {approvedLines.map((l) => (
+              <article
+                key={l.id}
+                className="flex items-center justify-between gap-3 rounded-xl border border-evergreen/25 bg-evergreen-soft px-4 py-3"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-ink">
+                    {l.description || "Untitled line"}
+                  </p>
+                  <p className="text-[0.78rem] text-evergreen">Approved ✓ posted</p>
+                </div>
+                <p className="tnum shrink-0 text-sm font-semibold text-ink">
+                  {l.currency} {money(l.amount)}
+                </p>
+              </article>
+            ))}
+          </div>
+
+          <div className="mt-5 flex items-center justify-between">
+            <Link href="/app/capture" className="btn-ghost btn-sm">
+              Snap another
+            </Link>
+            <Link
+              href="/app/reports"
+              className="text-[0.82rem] font-semibold text-evergreen"
+            >
+              See it in your reports →
+            </Link>
+          </div>
+        </section>
+      )}
+
+      <p className="mt-8 text-xs leading-relaxed text-ink-soft">
+        Photos are stored privately with your documents. Nothing posts to your
+        books until you approve it.
+      </p>
+    </div>
+  );
+}

@@ -20,6 +20,7 @@ const GROUPS: Group[] = [
   {
     label: "Bookkeeping",
     items: [
+      { href: "/app/capture", label: "Snap receipt", icon: "M2 5.5h2.5L6 3.5h4l1.5 2H14a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5H2a.5.5 0 0 1-.5-.5V6a.5.5 0 0 1 .5-.5zM8 7.2a2.3 2.3 0 1 0 0 4.6 2.3 2.3 0 0 0 0-4.6z" },
       { href: "/app/books/ledger", label: "Ledger", icon: "M3 2h8l2 2v10H3zM6 6h5M6 9h5M6 12h3" },
       { href: "/app/documents", label: "Documents", icon: "M4 2h5l3 3v9H4zM9 2v3h3" },
       { href: "/app/books/import", label: "Import", icon: "M8 2v8M5 7l3 3 3-3M3 13h10" },

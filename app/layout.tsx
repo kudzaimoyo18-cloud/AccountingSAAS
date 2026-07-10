@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
+import { PwaRegister } from "@/components/PwaRegister";
 import "./globals.css";
 
 // Single all-business sans across the whole product — headings, body, and
@@ -31,6 +32,25 @@ export const metadata: Metadata = {
       "Upload the paperwork, approve the AI-drafted lines, and your P&L, balance sheet, VAT and corporate-tax figures stay filing-ready. Fixed monthly fee.",
     type: "website",
   },
+  // PWA: installable app metadata (manifest comes from app/manifest.ts)
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Mizan",
+  },
+  icons: {
+    apple: "/icons/apple-touch-icon.png",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F6F8FA" },
+    { media: "(prefers-color-scheme: dark)", color: "#0F1B16" },
+  ],
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 // Runs before paint: applies saved theme (or system preference) to avoid flash
@@ -48,6 +68,7 @@ export default function RootLayout({
       </head>
       <body>
         {children}
+        <PwaRegister />
         <Analytics />
       </body>
     </html>
