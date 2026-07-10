@@ -26,15 +26,16 @@ export function Nav() {
             </a>
           ))}
         </nav>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 sm:gap-3">
           <ThemeToggle />
+          {/* Always visible — customers sign in from their phones */}
           <Link
             href="/login"
-            className="hidden text-sm font-medium text-ink-soft transition-colors hover:text-ink sm:block"
+            className="rounded-lg border border-line-strong bg-surface px-3.5 py-2 text-[0.82rem] font-semibold text-ink shadow-xs transition-colors hover:bg-paper-dim"
           >
             Sign in
           </Link>
-          <a href="/#waitlist" className="btn-primary text-[0.82rem]">
+          <a href="/#waitlist" className="btn-primary hidden text-[0.82rem] sm:inline-flex">
             Get early access
           </a>
         </div>
