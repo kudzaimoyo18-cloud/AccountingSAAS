@@ -6,15 +6,19 @@ import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { signOut } from "@/lib/actions";
 
-// Thumb-reachable bottom navigation for phones (md:hidden — desktop keeps the
-// workstation sidebar). Four primary destinations flank a raised center "Snap"
-// camera action; everything else lives in a slide-up "More" sheet.
+// Floating pill navigation for phones (md:hidden) — a Telegram-style bar that
+// hovers above the bottom edge. Each destination is an icon; the active one
+// expands to reveal its label (CSS width/opacity transition). "More" opens a
+// slide-up sheet with the overflow. Desktop keeps the workstation sidebar.
 
 type Item = { href: string; label: string; icon: string; exact?: boolean };
 
-const HOME: Item = { href: "/app", label: "Home", exact: true, icon: "M2 8.5 8 3l6 5.5M3.5 7.5V13h3v-3h3v3h3V7.5" };
-const BOOKS: Item = { href: "/app/books", label: "Books", icon: "M3 2h8l2 2v10H3zM6 6h5M6 9h5M6 12h3" };
-const REPORTS: Item = { href: "/app/reports", label: "Reports", icon: "M3 13V7M8 13V3M13 13v-4" };
+const TABS: Item[] = [
+  { href: "/app", label: "Home", exact: true, icon: "M2 8.5 8 3l6 5.5M3.5 7.5V13h3v-3h3v3h3V7.5" },
+  { href: "/app/books", label: "Books", icon: "M3 2h8l2 2v10H3zM6 6h5M6 9h5M6 12h3" },
+  { href: "/app/capture", label: "Snap", icon: "M2 5.5h2.5L6 3.5h4l1.5 2H14a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5H2a.5.5 0 0 1-.5-.5V6a.5.5 0 0 1 .5-.5zM8 7.2a2.3 2.3 0 1 0 0 4.6 2.3 2.3 0 0 0 0-4.6z" },
+  { href: "/app/reports", label: "Reports", icon: "M3 13V7M8 13V3M13 13v-4" },
+];
 
 const MORE_ITEMS: Item[] = [
   { href: "/app/documents", label: "Documents", icon: "M4 2h5l3 3v9H4zM9 2v3h3" },
@@ -26,10 +30,10 @@ const MORE_ITEMS: Item[] = [
   { href: "/app/settings", label: "Settings", icon: "M8 5.5A2.5 2.5 0 1 0 8 10.5 2.5 2.5 0 0 0 8 5.5zM8 1v2M8 13v2M15 8h-2M3 8H1M12.95 3.05l-1.4 1.4M4.46 11.54l-1.41 1.41M12.95 12.95l-1.4-1.4M4.46 4.46 3.05 3.05" },
 ];
 
-function Icon({ d, size = 20 }: { d: string; size?: number }) {
+function Icon({ d, size = 21 }: { d: string; size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" aria-hidden>
-      <path d={d} stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" aria-hidden className="shrink-0">
+      <path d={d} stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -43,74 +47,60 @@ export function MobileTabBar({ isAdmin = false }: { isAdmin?: boolean }) {
       ? pathname === item.href
       : pathname === item.href || pathname.startsWith(item.href + "/");
 
-  // "More" tab reads active whenever the current route lives inside the sheet.
   const moreActive =
     MORE_ITEMS.some((i) => pathname === i.href || pathname.startsWith(i.href + "/")) ||
     pathname.startsWith("/admin");
 
-  const Tab = ({ item }: { item: Item }) => {
-    const active = isActive(item);
-    return (
-      <Link
-        href={item.href}
-        prefetch
-        aria-current={active ? "page" : undefined}
-        className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-1.5 text-[0.62rem] font-medium transition-colors ${
-          active ? "text-evergreen" : "text-ink-soft"
-        }`}
-      >
-        <Icon d={item.icon} />
-        {item.label}
-      </Link>
-    );
-  };
+  // A pill item: icon always shown; label reveals with a width/opacity
+  // transition when active (the Telegram-style expand).
+  const pillClasses = (active: boolean) =>
+    `flex h-11 items-center rounded-full px-3 transition-colors duration-200 ${
+      active ? "bg-evergreen-soft text-evergreen" : "text-ink-soft hover:bg-paper-dim active:bg-paper-dim"
+    }`;
+
+  const label = (text: string, active: boolean) => (
+    <span
+      className={`overflow-hidden whitespace-nowrap text-xs font-semibold transition-all duration-300 ease-out ${
+        active ? "ml-2 max-w-[80px] opacity-100" : "ml-0 max-w-0 opacity-0"
+      }`}
+    >
+      {text}
+    </span>
+  );
 
   return (
     <>
       <nav
         aria-label="Primary"
-        className="fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden print:hidden"
+        className="fixed inset-x-0 bottom-[calc(0.9rem+env(safe-area-inset-bottom))] z-40 mx-auto flex w-fit max-w-[95vw] items-center gap-1 rounded-full border border-line bg-surface/95 p-1.5 shadow-lift backdrop-blur-md md:hidden print:hidden"
       >
-        <Tab item={HOME} />
-        <Tab item={BOOKS} />
+        {TABS.map((item) => {
+          const active = isActive(item);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              prefetch
+              aria-label={item.label}
+              aria-current={active ? "page" : undefined}
+              className={pillClasses(active)}
+            >
+              <Icon d={item.icon} />
+              {label(item.label, active)}
+            </Link>
+          );
+        })}
 
-        {/* Raised center action — Snap receipt (the hero action). */}
-        <div className="relative flex w-[22%] shrink-0 items-start justify-center">
-          <Link
-            href="/app/capture"
-            prefetch
-            aria-label="Snap a receipt"
-            className={`absolute -top-5 grid h-14 w-14 place-items-center rounded-full border-4 border-paper bg-evergreen text-white shadow-lift transition-transform active:scale-95 ${
-              pathname.startsWith("/app/capture") ? "ring-2 ring-evergreen/40" : ""
-            }`}
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
-              <path
-                d="M4 8h2.5L9 5h6l2.5 3H20a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"
-                stroke="currentColor"
-                strokeWidth="1.7"
-                strokeLinejoin="round"
-              />
-              <circle cx="12" cy="13" r="3.3" stroke="currentColor" strokeWidth="1.7" />
-            </svg>
-          </Link>
-          <span className="mt-auto pb-1.5 text-[0.62rem] font-medium text-ink-soft">Snap</span>
-        </div>
-
-        <Tab item={REPORTS} />
-
-        {/* More opens the overflow sheet. */}
         <button
           type="button"
           onClick={() => setMoreOpen(true)}
+          aria-label="More"
           aria-haspopup="dialog"
           aria-expanded={moreOpen}
-          className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-1.5 text-[0.62rem] font-medium transition-colors ${
-            moreActive ? "text-evergreen" : "text-ink-soft"
-          }`}
+          className={pillClasses(moreActive)}
         >
           <Icon d="M3 3h3v3H3zM10 3h3v3h-3zM3 10h3v3H3zM10 10h3v3h-3z" />
-          More
+          {label("More", moreActive)}
         </button>
       </nav>
 
