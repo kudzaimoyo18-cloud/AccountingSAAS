@@ -70,7 +70,7 @@ export function AssistantFab() {
           type="button"
           onClick={() => setOpen(true)}
           aria-label="Ask the assistant"
-          className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-4 z-40 grid h-14 w-14 place-items-center rounded-full bg-evergreen text-white shadow-lift transition-transform hover:bg-evergreen-deep active:scale-95 md:bottom-6 md:right-6 print:hidden"
+          className="fixed bottom-[calc(5.75rem+env(safe-area-inset-bottom))] right-4 z-40 grid h-14 w-14 place-items-center rounded-full bg-evergreen text-white shadow-lift transition-transform hover:bg-evergreen-deep active:scale-95 md:bottom-6 md:right-6 print:hidden"
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
             <path
