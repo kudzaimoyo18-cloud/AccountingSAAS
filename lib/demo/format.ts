@@ -16,6 +16,19 @@ export function money(amount: number, region: Region, opts?: { sign?: boolean })
   return amount < 0 ? `−${formatted}` : formatted;
 }
 
+/** Money with exact cents/fils — invoices and formal documents. */
+export function moneyExact(amount: number, region: Region): string {
+  const cfg = REGIONS[region];
+  const abs = Math.abs(amount);
+  const formatted = new Intl.NumberFormat(cfg.locale, {
+    style: "currency",
+    currency: cfg.currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(abs);
+  return amount < 0 ? `−${formatted}` : formatted;
+}
+
 export function compactMoney(amount: number, region: Region): string {
   const cfg = REGIONS[region];
   return new Intl.NumberFormat(cfg.locale, {

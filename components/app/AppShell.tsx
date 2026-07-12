@@ -30,6 +30,13 @@ const GROUPS: Group[] = [
     ],
   },
   {
+    label: "Sales",
+    items: [
+      { href: "/app/customers", label: "Customers", icon: "M8 7.5a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2zM2.8 13.7c.6-2.8 2.6-4.2 5.2-4.2s4.6 1.4 5.2 4.2" },
+      { href: "/app/invoices", label: "Invoices", icon: "M4 2h8v12l-2-1.3L8 14l-2-1.3L4 14zM6.2 5.5h3.6M6.2 8h3.6" },
+    ],
+  },
+  {
     label: "Accounting",
     items: [
       { href: "/app/reports", label: "Reports", icon: "M3 13V7M8 13V3M13 13v-4" },
