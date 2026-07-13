@@ -20,7 +20,9 @@ import {
 
 const CAPTURE = "/app/capture";
 const DIRECTIONS = ["income", "expense"] as const;
-const MAX_BYTES = 15 * 1024 * 1024;
+// Vercel Functions accept request bodies up to 4.5 MB. Leave room for the
+// multipart form envelope so the request reaches this Server Action reliably.
+const MAX_BYTES = 4 * 1024 * 1024;
 
 export async function captureReceipt(formData: FormData) {
   const supabase = await createClient();
@@ -33,7 +35,7 @@ export async function captureReceipt(formData: FormData) {
 
   const file = formData.get("photo") as File | null;
   if (!file || file.size === 0) redirect(`${CAPTURE}?error=No+photo+received`);
-  if (file.size > MAX_BYTES) redirect(`${CAPTURE}?error=Photo+too+large+(max+15MB)`);
+  if (file.size > MAX_BYTES) redirect(`${CAPTURE}?error=Photo+too+large+(max+4MB)`);
 
   const mediaType = file.type || "application/octet-stream";
   if (!isExtractable(mediaType)) {
