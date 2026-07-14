@@ -29,12 +29,11 @@ export default async function DocumentsPage({
 
   return (
     <div className="mx-auto max-w-4xl">
-        <h1 className="font-display text-3xl font-semibold tracking-tight">Documents</h1>
-        <p className="mt-1 text-sm text-ink-soft">
+        <p className="text-sm text-ink-soft">
           Invoices, receipts, bank statements — drop them here, we do the rest.
         </p>
 
-        <form action={uploadDocument} className="card mt-8">
+        <form action={uploadDocument} className="card mt-5">
           <input type="hidden" name="company_id" value={company.id} />
           <div className="grid gap-3 sm:grid-cols-[1fr_auto_auto]">
             <input

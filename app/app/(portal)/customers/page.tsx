@@ -62,22 +62,17 @@ export default async function CustomersPage({
 
   return (
     <div className="mx-auto max-w-4xl">
-      <h1 className="font-display text-3xl font-semibold tracking-tight">Customers</h1>
-      <p className="mt-1 text-sm text-ink-soft">
+      <p className="text-sm text-ink-soft">
         The people and businesses you invoice — contact details, history and balances in
         one place.
       </p>
 
       {error && (
-        <p role="alert" className="mt-4 rounded-xl border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger">
+        <p role="alert" className="alert-banner alert-banner-danger mt-4">
           {error}
         </p>
       )}
-      {ok && (
-        <p className="mt-4 rounded-xl border border-evergreen/30 bg-evergreen/5 px-4 py-3 text-sm">
-          {ok}
-        </p>
-      )}
+      {ok && <p className="alert-banner alert-banner-positive mt-4">{ok}</p>}
 
       <form action={createCustomer} className="card mt-6 space-y-3">
         <p className="text-sm font-medium">Add a customer</p>

@@ -89,27 +89,48 @@ body {
     @apply inline-flex items-center gap-2 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-ink-soft;
   }
 
-  /* ---- buttons ---- */
+  /* ---- buttons (pill-shaped, per Stitch shape system) ---- */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-evergreen px-4 py-2.5 text-sm font-semibold text-white
-           shadow-xs transition-colors duration-150 hover:bg-evergreen-deep
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-evergreen px-5 py-2.5 text-sm font-semibold text-white
+           shadow-xs transition-all duration-150 hover:bg-evergreen-deep
            focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-evergreen
            disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-line-strong bg-surface px-4 py-2.5 text-sm font-semibold text-ink
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-line-strong bg-surface px-5 py-2.5 text-sm font-semibold text-ink
            shadow-xs transition-colors duration-150 hover:bg-paper-dim
            focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-evergreen;
   }
-  .btn-sm { @apply px-3 py-1.5 text-[0.8rem]; }
+  .btn-sm { @apply px-3.5 py-1.5 text-[0.8rem]; }
+  /* sidebar / hero CTA with a soft evergreen glow */
+  .btn-glow {
+    box-shadow: 0 0 16px rgb(var(--evergreen-rgb) / 0.35);
+  }
+  .btn-glow:hover { box-shadow: 0 0 22px rgb(var(--evergreen-rgb) / 0.5); }
 
-  /* ---- surfaces ---- */
+  /* round icon-only button (top bar bell/help) */
+  .icon-btn {
+    @apply inline-flex h-9 w-9 items-center justify-center rounded-full text-ink-soft transition-colors
+           hover:bg-paper-dim hover:text-ink
+           focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-evergreen;
+  }
+
+  /* ---- filter chips (toolbar row, per Stitch ledger) ---- */
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-line-strong bg-surface px-3.5 py-1.5 text-[0.8rem] font-medium text-ink
+           shadow-xs transition-colors hover:bg-paper-dim;
+  }
+  .chip-active {
+    @apply border-evergreen/40 bg-evergreen-soft text-evergreen-deep;
+  }
+
+  /* ---- surfaces (tonal layering + 1px borders, generous radius) ---- */
   .card {
-    @apply rounded-xl border border-line bg-surface p-6 shadow-card;
+    @apply rounded-2xl border border-line bg-surface p-6 shadow-card;
   }
   /* section card with a header rule — the workstation panel */
   .panel {
-    @apply rounded-xl border border-line bg-surface shadow-card;
+    @apply rounded-2xl border border-line bg-surface shadow-card;
   }
   .panel-header {
     @apply flex items-center justify-between gap-3 border-b border-line px-5 py-3.5;
@@ -121,8 +142,12 @@ body {
 
   /* ---- inputs ---- */
   .field {
-    @apply w-full rounded-lg border border-line-strong bg-surface px-3.5 py-2.5 text-sm text-ink placeholder:text-ink-soft/60
+    @apply w-full rounded-xl border border-line-strong bg-surface px-3.5 py-2.5 text-sm text-ink placeholder:text-ink-soft/60
            shadow-xs transition-colors focus:border-evergreen focus:outline-none focus:ring-2 focus:ring-evergreen/25;
+  }
+  /* pill search input (top app bar) */
+  .field-search {
+    @apply rounded-full bg-paper-dim/70 border-line pl-9;
   }
   .label {
     @apply mb-1.5 block text-[0.8rem] font-medium text-ink;
@@ -130,7 +155,7 @@ body {
 
   /* ---- KPI tile ---- */
   .kpi {
-    @apply rounded-xl border border-line bg-surface px-5 py-4 shadow-card;
+    @apply rounded-2xl border border-line bg-surface px-5 py-4 shadow-card;
   }
   .kpi-label {
     @apply text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-ink-soft;
@@ -157,22 +182,41 @@ body {
     @apply px-3 pb-1.5 pt-4 text-[0.66rem] font-semibold uppercase tracking-[0.12em] text-sidebar-muted;
   }
   .sidebar-link {
-    @apply flex items-center gap-2.5 rounded-lg px-3 py-2 text-[0.86rem] font-medium text-sidebar-fg/80 transition-colors
+    @apply flex items-center gap-2.5 rounded-xl px-3 py-2 text-[0.86rem] font-medium text-sidebar-fg/80 transition-all
            hover:bg-sidebar-active hover:text-sidebar-fg;
   }
   .sidebar-link-active {
     @apply bg-sidebar-active text-white;
-    box-shadow: inset 2px 0 0 0 rgb(var(--evergreen-rgb));
+    box-shadow: inset -3px 0 0 0 rgb(var(--evergreen-rgb));
   }
 
-  /* ---- badges ---- */
+  /* ---- badges (pill status indicators) ---- */
   .badge {
-    @apply inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium;
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium;
   }
   .badge-positive { @apply bg-positive/10 text-positive; }
   .badge-warning { @apply bg-warning/10 text-warning; }
   .badge-danger { @apply bg-danger/10 text-danger; }
   .badge-neutral { @apply bg-paper-dim text-ink-soft; }
+
+  /* ---- sync status dot (top app bar) ---- */
+  .status-dot {
+    @apply inline-block h-2 w-2 rounded-full bg-evergreen;
+    animation: mzPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  /* ---- risk alert banner (full-width, per Stitch) ---- */
+  .alert-banner {
+    @apply flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium;
+  }
+  .alert-banner-danger { @apply bg-danger/10 text-danger; }
+  .alert-banner-warning { @apply bg-warning/10 text-warning; }
+  .alert-banner-positive { @apply bg-positive/10 text-positive; }
+}
+
+@keyframes mzPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.2); }
 }
 
 @keyframes rise {

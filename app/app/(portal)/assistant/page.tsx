@@ -72,8 +72,7 @@ export default async function AssistantPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="font-display text-3xl font-semibold tracking-tight">Assistant</h1>
-      <p className="mt-1 text-sm text-ink-soft">
+      <p className="text-sm text-ink-soft">
         Your bookkeeping copilot — it keeps an eye on what needs doing and answers
         questions about {company.name}&apos;s numbers.
       </p>

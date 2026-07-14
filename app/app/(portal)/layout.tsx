@@ -29,5 +29,9 @@ export default async function PortalLayout({
     return <PendingApproval companyName={company.name} email={user.email} />;
   }
 
-  return <AppShell isAdmin={isAdmin}>{children}</AppShell>;
+  return (
+    <AppShell isAdmin={isAdmin} companyName={company.name} userEmail={user.email}>
+      {children}
+    </AppShell>
+  );
 }

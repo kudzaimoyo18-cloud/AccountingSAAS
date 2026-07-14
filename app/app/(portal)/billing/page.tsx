@@ -13,16 +13,13 @@ export default async function BillingPage() {
   return (
     <div className="mx-auto max-w-4xl">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="font-display text-3xl font-semibold tracking-tight">Billing</h1>
-            <p className="mt-1 text-sm text-ink-soft">
-              Monthly retainer, paid securely via Ziina. Founding-member pricing — locked for life.
-            </p>
-          </div>
+          <p className="text-sm text-ink-soft">
+            Monthly retainer, paid securely via Ziina. Founding-member pricing — locked for life.
+          </p>
           <StatusBadge status={company.status} />
         </div>
 
-        <div className="mt-8 grid gap-5 lg:grid-cols-3">
+        <div className="mt-6 grid gap-5 lg:grid-cols-3">
           {TIERS.map((t) => {
             const link = PAYMENT_LINKS[t.id];
             const isCurrent = company.plan === t.id;

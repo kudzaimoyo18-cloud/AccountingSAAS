@@ -34,12 +34,9 @@ export default async function NewInvoicePage({
       <Link href="/app/invoices" className="text-sm text-ink-soft hover:text-ink">
         ← Invoices
       </Link>
-      <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight">
-        New invoice
-      </h1>
 
       {error && (
-        <p role="alert" className="mt-4 rounded-xl border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger">
+        <p role="alert" className="alert-banner alert-banner-danger mt-4">
           {error}
         </p>
       )}

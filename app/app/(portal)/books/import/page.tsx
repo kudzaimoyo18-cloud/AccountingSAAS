@@ -20,18 +20,13 @@ export default async function ImportPage({
 
   return (
     <div className="mx-auto max-w-3xl">
-        <p className="eyebrow">Import</p>
-        <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">Import a bank statement</h1>
-        <p className="mt-1 text-sm text-ink-soft">
+        <BooksTabs active="import" reviewCount={reviewCount} />
+        <p className="mt-4 text-sm text-ink-soft">
           Upload a CSV. Mizan auto-categorises every line, splits VAT, and flags only what needs a human.
         </p>
 
-        <div className="mt-6">
-          <BooksTabs active="import" reviewCount={reviewCount} />
-        </div>
-
         {error && (
-          <p role="alert" className="mt-4 rounded-xl border border-danger/30 bg-danger/10 px-4 py-2.5 text-sm text-danger">
+          <p role="alert" className="alert-banner alert-banner-danger mt-4">
             {error.replace(/\+/g, " ")}
           </p>
         )}

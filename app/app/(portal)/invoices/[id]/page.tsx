@@ -39,9 +39,7 @@ export default async function InvoiceDetailPage({
 
       <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <h1 className="font-display text-3xl font-semibold tracking-tight">
-            {invoice.number}
-          </h1>
+          <h1 className="page-title text-2xl">{invoice.number}</h1>
           <InvoiceStatusPill status={invoice.status} />
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -57,15 +55,11 @@ export default async function InvoiceDetailPage({
       </div>
 
       {error && (
-        <p role="alert" className="mt-4 rounded-xl border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger">
+        <p role="alert" className="alert-banner alert-banner-danger mt-4">
           {error}
         </p>
       )}
-      {ok && (
-        <p className="mt-4 rounded-xl border border-evergreen/30 bg-evergreen/5 px-4 py-3 text-sm">
-          {ok}
-        </p>
-      )}
+      {ok && <p className="alert-banner alert-banner-positive mt-4">{ok}</p>}
 
       <div className="card mt-6">
         <div className="flex flex-wrap justify-between gap-4">

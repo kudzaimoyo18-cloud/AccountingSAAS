@@ -59,27 +59,22 @@ export default async function ClosePage({
 
   return (
     <div className="mx-auto max-w-5xl">
-        <p className="eyebrow">Period close</p>
-        <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">Close &amp; hand off</h1>
-        <p className="mt-1 text-sm text-ink-soft">{period}</p>
-
-        <div className="mt-6">
-          <BooksTabs active="close" reviewCount={reports.reviewCount} />
-        </div>
+        <BooksTabs active="close" reviewCount={reports.reviewCount} />
+        <p className="mt-4 text-sm text-ink-soft">{period}</p>
 
         {ok && (
-          <p className="mt-4 rounded-xl border border-evergreen/30 bg-evergreen/10 px-4 py-2.5 text-sm text-evergreen">
+          <p className="alert-banner alert-banner-positive mt-4">
             {decodeURIComponent(ok.replace(/\+/g, " "))}
           </p>
         )}
         {error && (
-          <p role="alert" className="mt-4 rounded-xl border border-danger/30 bg-danger/10 px-4 py-2.5 text-sm text-danger">
+          <p role="alert" className="alert-banner alert-banner-danger mt-4">
             {error.replace(/\+/g, " ")}
           </p>
         )}
 
         {reports.reviewCount > 0 && (
-          <p className="mt-4 rounded-xl border border-brass/30 bg-brass/5 px-4 py-2.5 text-sm text-brass-deep">
+          <p className="alert-banner alert-banner-warning mt-4">
             {reports.reviewCount} transaction{reports.reviewCount === 1 ? "" : "s"} still need review — clear the
             queue first so the pack is complete.
           </p>

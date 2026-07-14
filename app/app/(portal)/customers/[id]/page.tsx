@@ -60,28 +60,22 @@ export default async function CustomerDetailPage({
         ← Customers
       </Link>
       <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-display text-3xl font-semibold tracking-tight">
-          {customer.name}
-        </h1>
+        <h1 className="page-title text-2xl">{customer.name}</h1>
         <form action={setCustomerArchived}>
           <input type="hidden" name="id" value={customer.id} />
           <input type="hidden" name="archived" value={customer.archived ? "false" : "true"} />
-          <button type="submit" className="btn-ghost text-sm">
+          <button type="submit" className="btn-ghost btn-sm">
             {customer.archived ? "Restore customer" : "Archive customer"}
           </button>
         </form>
       </div>
 
       {error && (
-        <p role="alert" className="mt-4 rounded-xl border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger">
+        <p role="alert" className="alert-banner alert-banner-danger mt-4">
           {error}
         </p>
       )}
-      {ok && (
-        <p className="mt-4 rounded-xl border border-evergreen/30 bg-evergreen/5 px-4 py-3 text-sm">
-          {ok}
-        </p>
-      )}
+      {ok && <p className="alert-banner alert-banner-positive mt-4">{ok}</p>}
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <div className="card">

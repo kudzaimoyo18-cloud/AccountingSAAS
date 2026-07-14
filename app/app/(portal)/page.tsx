@@ -82,12 +82,7 @@ export default async function OverviewPage() {
       {/* page header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-5">
         <div>
-          <nav className="breadcrumb" aria-label="Breadcrumb">
-            <span>Overview</span>
-            <span aria-hidden>/</span>
-            <span className="text-ink">Dashboard</span>
-          </nav>
-          <div className="mt-1.5 flex items-center gap-3">
+          <div className="flex items-center gap-3">
             <h1 className="page-title text-2xl">{company.name}</h1>
             <StatusBadge status={company.status} />
           </div>

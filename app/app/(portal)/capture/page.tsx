@@ -62,27 +62,17 @@ export default async function CapturePage({
 
   return (
     <div className="mx-auto max-w-lg">
-      <div className="border-b border-line pb-5">
-        <nav className="breadcrumb" aria-label="Breadcrumb">
-          <span>Bookkeeping</span>
-          <span aria-hidden>/</span>
-          <span className="text-ink">Snap receipt</span>
-        </nav>
-        <h1 className="page-title mt-1.5 text-2xl">Capture</h1>
-        <p className="mt-1 text-sm text-ink-soft">
-          Photograph a receipt or invoice — Mizan drafts the books, you approve.
-        </p>
-      </div>
+      <p className="text-sm text-ink-soft">
+        Photograph a receipt or invoice — Mizan drafts the books, you approve.
+      </p>
 
       {error && (
-        <p className="mt-4 rounded-lg border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger">
+        <p role="alert" className="alert-banner alert-banner-danger mt-4">
           {error}
         </p>
       )}
       {warn && (
-        <p className="mt-4 rounded-lg border border-warning/30 bg-warning/5 px-4 py-3 text-sm text-warning">
-          {warn}
-        </p>
+        <p className="alert-banner alert-banner-warning mt-4">{warn}</p>
       )}
 
       <div className="mt-6">

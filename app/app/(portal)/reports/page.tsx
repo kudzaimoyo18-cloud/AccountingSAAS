@@ -26,19 +26,14 @@ export default async function ReportsPage() {
   return (
     <div className="mx-auto max-w-6xl">
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-line pb-5">
-        <div>
-          <nav className="breadcrumb" aria-label="Breadcrumb">
-            <span>Accounting</span>
-            <span aria-hidden>/</span>
-            <span className="text-ink">Reports</span>
-          </nav>
-          <h1 className="page-title mt-1.5 text-2xl">Financial statements</h1>
-          <p className="mt-1 text-sm text-ink-soft">
-            Built from your approved ledger lines (cash basis). Approve a line and
-            it lands here automatically.
-          </p>
-        </div>
-        <Link href="/app/reports/print" className="btn-ghost">
+        <p className="text-sm text-ink-soft">
+          Built from your approved ledger lines (cash basis). Approve a line and
+          it lands here automatically.
+        </p>
+        <Link href="/app/reports/print" className="btn-ghost btn-sm">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden>
+            <path d="M4 6V2h8v4M4 12H2V6h12v6h-2M4 10h8v4H4z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
           Print / PDF
         </Link>
       </div>

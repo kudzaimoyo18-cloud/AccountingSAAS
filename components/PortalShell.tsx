@@ -22,9 +22,9 @@ export function PortalShell({
 }) {
   return (
     <div className="flex min-h-screen">
-      <aside className="hidden w-60 shrink-0 flex-col border-r border-line bg-paper-dim/40 p-5 md:flex">
+      <aside className="hidden w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar p-5 md:flex">
         <Link href="/" aria-label="Mizan home" className="px-2">
-          <Logo />
+          <Logo onDark />
         </Link>
         <nav className="mt-9 flex flex-1 flex-col gap-1" aria-label="Portal">
           {NAV.map((item) => (
@@ -41,9 +41,10 @@ export function PortalShell({
           ))}
           {isAdmin && (
             <>
+              <p className="nav-group-label mt-4">Admin</p>
               <Link
                 href="/admin"
-                className={`sidebar-link mt-4 border border-dashed border-brass/40 text-brass-deep ${active === "/admin" ? "sidebar-link-active" : ""}`}
+                className={`sidebar-link text-brass ${active === "/admin" ? "sidebar-link-active" : ""}`}
               >
                 <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden>
                   <path d="M8 1l2 4 4.5.5-3.5 3 1 4.5L8 10.5 4 13l1-4.5-3.5-3L6 5z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
@@ -52,7 +53,7 @@ export function PortalShell({
               </Link>
               <Link
                 href="/admin/waitlist"
-                className={`sidebar-link border border-dashed border-brass/40 text-brass-deep ${active === "/admin/waitlist" ? "sidebar-link-active" : ""}`}
+                className={`sidebar-link text-brass ${active === "/admin/waitlist" ? "sidebar-link-active" : ""}`}
               >
                 <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden>
                   <path d="M2 4h12M2 8h12M2 12h8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
@@ -62,10 +63,10 @@ export function PortalShell({
             </>
           )}
         </nav>
-        <div className="flex items-center justify-between border-t border-line pt-4">
+        <div className="flex items-center justify-between border-t border-sidebar-border pt-4">
           <ThemeToggle />
           <form action={signOut}>
-            <button type="submit" className="text-sm text-ink-soft transition-colors hover:text-ink">
+            <button type="submit" className="text-sm text-sidebar-muted transition-colors hover:text-sidebar-fg">
               Sign out
             </button>
           </form>
@@ -89,13 +90,20 @@ export function PortalShell({
             <Link
               key={item.href}
               href={item.href}
-              className={`sidebar-link whitespace-nowrap ${active === item.href ? "sidebar-link-active" : ""}`}
+              className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
+                active === item.href
+                  ? "bg-evergreen-soft text-evergreen"
+                  : "text-ink-soft hover:bg-paper-dim hover:text-ink"
+              }`}
             >
               {item.label}
             </Link>
           ))}
           {isAdmin && (
-            <Link href="/admin" className="sidebar-link whitespace-nowrap text-brass-deep">
+            <Link
+              href="/admin"
+              className="whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium text-brass-deep hover:bg-paper-dim"
+            >
               Admin
             </Link>
           )}

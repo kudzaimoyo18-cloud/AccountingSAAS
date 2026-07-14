@@ -18,9 +18,7 @@ export default async function ReviewPage() {
 
   return (
     <div className="mx-auto max-w-5xl">
-        <p className="eyebrow">Human-in-the-loop</p>
-        <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">Review queue</h1>
-        <p className="mt-1 max-w-xl text-sm text-ink-soft">
+        <p className="max-w-xl text-sm text-ink-soft">
           Mizan posts everything it&apos;s confident about and surfaces only the edge cases. Approve the
           suggestion or re-assign — and Mizan remembers the choice for next time.
         </p>

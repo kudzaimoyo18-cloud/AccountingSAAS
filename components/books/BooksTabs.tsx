@@ -16,7 +16,7 @@ export function BooksTabs({ active }: { active: BooksTab; reviewCount?: number }
         <Link
           key={tab.key}
           href={tab.href}
-          className={`relative rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+          className={`relative rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
             active === tab.key
               ? "bg-evergreen-soft text-evergreen"
               : "text-ink-soft hover:bg-paper-dim hover:text-ink"

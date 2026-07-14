@@ -42,12 +42,12 @@ export default async function BooksPage({
         </div>
 
         {ok && (
-          <p className="mt-4 rounded-xl border border-evergreen/30 bg-evergreen/10 px-4 py-2.5 text-sm text-evergreen">
+          <p className="alert-banner alert-banner-positive mt-4">
             {ok.replace(/\+/g, " ")}
           </p>
         )}
         {error && (
-          <p role="alert" className="mt-4 rounded-xl border border-danger/30 bg-danger/10 px-4 py-2.5 text-sm text-danger">
+          <p role="alert" className="alert-banner alert-banner-danger mt-4">
             {error.replace(/\+/g, " ")}
           </p>
         )}

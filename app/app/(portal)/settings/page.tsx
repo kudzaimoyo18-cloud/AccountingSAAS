@@ -12,9 +12,7 @@ export default async function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-        <h1 className="font-display text-3xl font-semibold tracking-tight">Settings</h1>
-
-        <div className="card mt-8">
+        <div className="card">
           <h2 className="font-display text-lg font-medium">Account</h2>
           <dl className="mt-4 space-y-3 text-sm">
             <div className="flex justify-between gap-4">

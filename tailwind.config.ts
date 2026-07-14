@@ -48,10 +48,13 @@ const config: Config = {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
       },
       maxWidth: { shell: "82rem" },
+      // Stitch shape language: generous rounding — pill buttons/chips,
+      // soft 1.25–2rem container corners.
       borderRadius: {
-        lg: "0.625rem",
-        xl: "0.75rem",
-        "2xl": "0.875rem",
+        lg: "0.75rem",
+        xl: "1rem",
+        "2xl": "1.25rem",
+        "3xl": "2rem",
       },
       boxShadow: {
         // crisp, low, product-grade elevation — not the soft boutique float

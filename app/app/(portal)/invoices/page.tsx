@@ -34,29 +34,27 @@ export default async function InvoicesPage({
   return (
     <div className="mx-auto max-w-4xl">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-display text-3xl font-semibold tracking-tight">Invoices</h1>
-          <p className="mt-1 text-sm text-ink-soft">
-            Create, share and track invoices — payments post straight to your books.
-          </p>
-        </div>
+        <p className="text-sm text-ink-soft">
+          Create, share and track invoices — payments post straight to your books.
+        </p>
         <Link href="/app/invoices/new" className="btn-primary">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden>
+            <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
           New invoice
         </Link>
       </div>
 
       {error && (
-        <p role="alert" className="mt-4 rounded-xl border border-danger/30 bg-danger/5 px-4 py-3 text-sm text-danger">
+        <p role="alert" className="alert-banner alert-banner-danger mt-4">
           {error}
         </p>
       )}
       {ok && (
-        <p className="mt-4 rounded-xl border border-evergreen/30 bg-evergreen/5 px-4 py-3 text-sm">
-          {ok}
-        </p>
+        <p className="alert-banner alert-banner-positive mt-4">{ok}</p>
       )}
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <div className="card">
           <p className="text-xs uppercase tracking-[0.14em] text-ink-soft">Outstanding</p>
           <p className="tnum mt-2 font-display text-3xl font-semibold">
