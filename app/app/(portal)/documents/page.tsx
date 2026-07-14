@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { StatusBadge } from "@/components/StatusBadge";
-import { uploadDocument } from "@/lib/actions";
+import { DocumentUploadForm } from "@/components/app/DocumentUploadForm";
 import { getCompany } from "@/lib/portal";
 
 export const metadata = { title: "Documents — Mizan" };
@@ -33,27 +33,7 @@ export default async function DocumentsPage({
           Invoices, receipts, bank statements — drop them here, we do the rest.
         </p>
 
-        <form action={uploadDocument} className="card mt-5">
-          <input type="hidden" name="company_id" value={company.id} />
-          <div className="grid gap-3 sm:grid-cols-[1fr_auto_auto]">
-            <input
-              type="file"
-              name="file"
-              required
-              className="field file:mr-3 file:rounded-lg file:border-0 file:bg-paper-dim file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-ink"
-              aria-label="Choose file"
-            />
-            <select name="kind" className="field sm:w-44" defaultValue="invoice" aria-label="Document type">
-              {KINDS.map((k) => (
-                <option key={k.value} value={k.value}>{k.label}</option>
-              ))}
-            </select>
-            <button type="submit" className="btn-primary">Upload</button>
-          </div>
-          {error && <p role="alert" className="mt-3 text-sm text-danger">{error}</p>}
-          {ok && <p className="mt-3 text-sm text-evergreen">Uploaded. We&apos;ll process it shortly.</p>}
-          <p className="mt-3 text-xs text-ink-soft">PDF, images, or spreadsheets. Max 15MB.</p>
-        </form>
+        <DocumentUploadForm companyId={company.id} serverError={error} serverOk={Boolean(ok)} />
 
         {(docs ?? []).length === 0 ? (
           <p className="mt-10 text-center text-sm text-ink-soft">No documents yet.</p>

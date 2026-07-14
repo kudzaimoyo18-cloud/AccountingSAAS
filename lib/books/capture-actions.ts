@@ -1,10 +1,11 @@
 "use server";
 
-// Mobile receipt capture: one action that takes a camera photo, stores it as a
-// document, runs AI extraction, and lands the user on the review step — the
-// whole snap → draft → approve loop with a single submit. Reuses the exact
-// storage/extraction path of /app/documents + /app/books/ledger; scoped to the
-// caller's own company from the session (never a form field).
+// Mobile receipt capture: the browser uploads the photo straight to Supabase
+// Storage (RLS scopes writes to the caller's company folder), then this action
+// receives only the storage PATH, downloads the file server-side, runs AI
+// extraction, and lands the user on the review step. Keeping the photo out of
+// the action request means Vercel's ~4.5MB function body cap can never 413 a
+// capture again. Scoped to the caller's own company from the session.
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -20,9 +21,7 @@ import {
 
 const CAPTURE = "/app/capture";
 const DIRECTIONS = ["income", "expense"] as const;
-// Vercel Functions accept request bodies up to 4.5 MB. Leave room for the
-// multipart form envelope so the request reaches this Server Action reliably.
-const MAX_BYTES = 4 * 1024 * 1024;
+const MAX_BYTES = 15 * 1024 * 1024;
 
 export async function captureReceipt(formData: FormData) {
   const supabase = await createClient();
@@ -33,25 +32,29 @@ export async function captureReceipt(formData: FormData) {
   const company = await getActiveCompany();
   if (!company) redirect("/app/onboarding");
 
-  const file = formData.get("photo") as File | null;
-  if (!file || file.size === 0) redirect(`${CAPTURE}?error=No+photo+received`);
-  if (file.size > MAX_BYTES) redirect(`${CAPTURE}?error=Photo+too+large+(max+4MB)`);
+  // The browser already uploaded the photo; we only get its storage path.
+  // Accept nothing outside the caller's own company folder.
+  const path = String(formData.get("path") ?? "");
+  const originalName = String(formData.get("original_name") ?? "").slice(0, 200);
+  if (!path || !path.startsWith(`${company.id}/`) || path.includes("..")) {
+    redirect(`${CAPTURE}?error=No+photo+received`);
+  }
 
-  const mediaType = file.type || "application/octet-stream";
+  // 1) Pull the photo back out of the private bucket (owner read policy).
+  const { data: file, error: dlErr } = await supabase.storage
+    .from("documents")
+    .download(path);
+  if (dlErr || !file) {
+    console.error("[capture] download:", dlErr?.message);
+    redirect(`${CAPTURE}?error=Could+not+read+the+uploaded+photo+—+try+again`);
+  }
+
+  const mediaType =
+    file.type || String(formData.get("media_type") ?? "") || "application/octet-stream";
   if (!isExtractable(mediaType)) {
     redirect(`${CAPTURE}?error=That+file+type+is+not+supported`);
   }
-
-  // 1) Store the photo in the same private bucket the Documents page uses.
-  const ext = mediaType === "image/png" ? "png" : mediaType === "application/pdf" ? "pdf" : "jpg";
-  const path = `${company.id}/${Date.now()}-capture.${ext}`;
-  const { error: upErr } = await supabase.storage
-    .from("documents")
-    .upload(path, file, { contentType: mediaType });
-  if (upErr) {
-    console.error("[capture] storage:", upErr.message);
-    redirect(`${CAPTURE}?error=Upload+failed+—+try+again`);
-  }
+  if (file.size > MAX_BYTES) redirect(`${CAPTURE}?error=Photo+too+large+(max+15MB)`);
 
   // 2) Record it as a receipt document.
   const { data: doc, error: dbErr } = await supabase
@@ -60,7 +63,7 @@ export async function captureReceipt(formData: FormData) {
       company_id: company.id,
       uploaded_by: user.id,
       storage_path: path,
-      original_name: file.name?.slice(0, 200) || `capture.${ext}`,
+      original_name: originalName || "capture",
       kind: "receipt",
     })
     .select("id")
@@ -77,7 +80,7 @@ export async function captureReceipt(formData: FormData) {
     extracted = await extractLedgerEntries({
       data: base64,
       mediaType,
-      fileName: file.name || "receipt photo",
+      fileName: originalName || "receipt photo",
       docKind: "receipt",
     });
   } catch (e) {

@@ -76,7 +76,7 @@ export default async function CapturePage({
       )}
 
       <div className="mt-6">
-        <CaptureUpload />
+        <CaptureUpload companyId={company.id} />
       </div>
 
       {lines.length > 0 && (
