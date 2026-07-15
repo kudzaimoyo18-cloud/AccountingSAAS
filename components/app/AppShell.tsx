@@ -270,27 +270,15 @@ export function AppShell({
           </div>
         </header>
 
-        {/* mobile top bar — green mark + wordmark; nav lives in the tab bar */}
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line bg-surface/95 px-4 backdrop-blur-md md:hidden print:hidden">
-          <Link href="/" aria-label="Mizan home" className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-evergreen text-sidebar">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-                <path d="M7 15c0-2.5 2-4 5-4s5-1.5 5-4M7 9c0 2.5 2 4 5 4M12 3v18" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-              </svg>
-            </span>
-            <span className="text-lg font-extrabold tracking-tight text-ink">Mizan</span>
-          </Link>
-          <ThemeToggle />
-        </header>
-
-        {/* bottom padding on mobile so content clears the fixed tab bar */}
-        <main className="flex-1 p-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:p-8 md:pb-8">
+        {/* Mobile has no persistent top bar — each Cash Now screen self-headers
+            (design: MOBILE). Bottom padding clears the fixed tab bar. */}
+        <main className="flex-1 p-5 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:p-8 md:pb-8">
           {children}
         </main>
       </div>
 
-      {/* mobile bottom navigation + floating assistant */}
-      <MobileTabBar isAdmin={isAdmin} />
+      {/* mobile bottom navigation + floating assistant (desktop only) */}
+      <MobileTabBar />
       <AssistantFab />
     </div>
   );

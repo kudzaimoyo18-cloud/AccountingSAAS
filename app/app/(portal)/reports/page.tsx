@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getActiveCompany } from "@/lib/books/repo";
 import { loadStatements } from "@/lib/books/statements";
 import { CT_THRESHOLD } from "@/lib/tax";
+import { MobileInsights, type InsightKpi } from "@/components/app/mobile/MobileInsights";
 
 export const metadata = { title: "Reports — Mizan" };
 
@@ -23,8 +24,34 @@ export default async function ReportsPage() {
 
   const { tb, pnl, bs, tax, hasData } = await loadStatements(company.id);
 
+  // Mobile Insights: KPI grid + expense breakdown from the same statements.
+  const insightKpis: InsightKpi[] = [
+    { label: "Revenue", value: `AED ${money(pnl.totalIncome)}` },
+    { label: "Expenses", value: `AED ${money(pnl.totalExpense)}` },
+    { label: "Net profit", value: `AED ${money(pnl.netProfit)}`, tone: pnl.netProfit < 0 ? "danger" : "positive" },
+    { label: "VAT due", value: `AED ${money(tax.vat.net)}` },
+  ];
+  const totalExp = pnl.totalExpense || 1;
+  const insightCats = [...pnl.expense]
+    .sort((a, b) => b.amount - a.amount)
+    .slice(0, 5)
+    .map((e) => ({ name: e.name, pct: Math.round((e.amount / totalExp) * 100) }));
+
   return (
-    <div className="mx-auto max-w-6xl">
+    <>
+    {/* mobile Insights (Cash Now) */}
+    <div className="md:hidden">
+      <MobileInsights
+        kpis={insightKpis}
+        cats={insightCats}
+        vatDue={hasData ? tax.vat.net : 0}
+        currency="AED"
+        hasData={hasData}
+      />
+    </div>
+
+    {/* desktop reports */}
+    <div className="mx-auto hidden max-w-6xl md:block">
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-line pb-5">
         <p className="text-sm text-ink-soft">
           Built from your approved ledger lines (cash basis). Approve a line and
@@ -197,6 +224,7 @@ export default async function ReportsPage() {
         filing.
       </p>
     </div>
+    </>
   );
 }
 

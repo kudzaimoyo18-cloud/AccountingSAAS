@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getActiveCompany } from "@/lib/books/repo";
 import { loadStatements } from "@/lib/books/statements";
 import { createClient } from "@/lib/supabase/server";
+import { MobileHome, type MobileTxn } from "@/components/app/mobile/MobileHome";
 
 export const metadata = { title: "Overview — Mizan" };
 
@@ -101,6 +102,13 @@ export default async function OverviewPage() {
   const { months, max } = cashflow((flowRaw ?? []) as FlowRow[]);
   const hasFlow = months.some((m) => m.inSum > 0 || m.outSum > 0);
 
+  // Month-over-month change in net (income − expense) for the mobile hero delta.
+  const netByMonth = months.map((m) => m.inSum - m.outSum);
+  const thisNet = netByMonth[netByMonth.length - 1] ?? 0;
+  const lastNet = netByMonth[netByMonth.length - 2] ?? 0;
+  const deltaPct = hasFlow && lastNet !== 0 ? ((thisNet - lastNet) / Math.abs(lastNet)) * 100 : null;
+  const initials = company.name.replace(/[^A-Za-z ]/g, "").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "MZ";
+
   // Getting-started checklist — shown until every step is done.
   const checklist = [
     { title: "Create your company", body: "Done — your compliance file exists.", href: "/app/settings", cta: "Settings", done: true },
@@ -113,7 +121,23 @@ export default async function OverviewPage() {
   const onboarding = doneCount < checklist.length;
 
   return (
-    <div className="mx-auto max-w-6xl rise">
+    <>
+    {/* mobile Home (Cash Now) */}
+    <div className="md:hidden">
+      <MobileHome
+        companyName={company.name}
+        initials={initials}
+        greeting={greeting()}
+        netProfit={hasData ? pnl.netProfit : 0}
+        deltaPct={deltaPct}
+        currency="AED"
+        hasData={hasData}
+        recent={recent as MobileTxn[]}
+      />
+    </div>
+
+    {/* desktop dashboard */}
+    <div className="mx-auto hidden max-w-6xl rise md:block">
       {/* greeting header (Cash Now dashboard) */}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
@@ -297,6 +321,7 @@ export default async function OverviewPage() {
         </div>
       )}
     </div>
+    </>
   );
 }
 
