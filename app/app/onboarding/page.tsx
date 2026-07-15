@@ -37,7 +37,7 @@ export default async function OnboardingPage({
               <span
                 className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 font-medium ${
                   s.state === "now"
-                    ? "bg-evergreen text-white"
+                    ? "bg-evergreen text-sidebar"
                     : "border border-line text-ink-soft"
                 }`}
               >

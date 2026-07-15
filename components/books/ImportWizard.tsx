@@ -60,7 +60,7 @@ export function ImportWizard() {
           accept=".csv,text/csv"
           required
           onChange={handleFile}
-          className="block w-full text-sm text-ink-soft file:mr-4 file:rounded-lg file:border-0 file:bg-evergreen file:px-4 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-evergreen-deep"
+          className="block w-full text-sm text-ink-soft file:mr-4 file:rounded-lg file:border-0 file:bg-evergreen file:px-4 file:py-2 file:text-sm file:font-medium file:text-sidebar hover:file:bg-evergreen-deep"
         />
         <p className="mt-2 text-xs text-ink-soft">
           Export a statement from your bank as CSV. We read the columns in your browser — nothing is

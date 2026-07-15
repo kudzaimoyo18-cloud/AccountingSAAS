@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BooksTabs } from "@/components/books/BooksTabs";
 import { LedgerTable, type LedgerRow } from "@/components/books/LedgerTable";
+import { MobileMoney, type MobileMoneyRow } from "@/components/app/mobile/MobileMoney";
 import { getActiveCompany } from "@/lib/books/repo";
 import { createClient } from "@/lib/supabase/server";
 import { LEDGER_CATEGORIES } from "@/lib/ai";
@@ -129,6 +130,7 @@ export default async function BooksLedgerPage({
     status?: string;
     direction?: string;
     category?: string;
+    period?: string;
   }>;
 }) {
   const company = await getActiveCompany();
@@ -148,8 +150,9 @@ export default async function BooksLedgerPage({
       ? sp.category!
       : "",
   };
+  const periodMonth = sp.period === "month";
   const hasFilters = Boolean(
-    filters.q || filters.status || filters.direction || filters.category,
+    filters.q || filters.status || filters.direction || filters.category || periodMonth,
   );
 
   const supabase = await createClient();
@@ -171,6 +174,11 @@ export default async function BooksLedgerPage({
   }
   if (filters.category) {
     entriesQuery = entriesQuery.eq("category", filters.category);
+  }
+  if (periodMonth) {
+    const now = new Date();
+    const firstOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+    entriesQuery = entriesQuery.gte("entry_date", firstOfMonth);
   }
 
   const [{ data: entries }, { data: docs }] = await Promise.all([
@@ -204,8 +212,25 @@ export default async function BooksLedgerPage({
   const filterQs = filterHref(filters, {}).split("?")[1] ?? "";
   const exportHref = `/app/books/ledger/export${filterQs ? `?${filterQs}` : ""}`;
 
+  // Mobile Money filter chips (design labels), wired to real ledger filters.
+  const noFilter = !hasFilters;
+  const mobileChips = [
+    { label: "All", href: "/app/books/ledger", active: noFilter },
+    { label: "Income", href: "/app/books/ledger?direction=income", active: filters.direction === "income" },
+    { label: "Expenses", href: "/app/books/ledger?direction=expense", active: filters.direction === "expense" },
+    { label: "Needs review", href: "/app/books/ledger?status=draft", active: filters.status === "draft" },
+    { label: "This month", href: "/app/books/ledger?period=month", active: periodMonth },
+  ];
+
   return (
-    <div className="mx-auto max-w-6xl">
+    <>
+    {/* mobile Money (Cash Now) */}
+    <div className="md:hidden">
+      <MobileMoney rows={rows as MobileMoneyRow[]} chips={mobileChips} hasFilters={hasFilters} />
+    </div>
+
+    {/* desktop ledger */}
+    <div className="mx-auto hidden max-w-6xl md:block">
       <BooksTabs active="ledger" />
 
       {error && (
@@ -454,5 +479,6 @@ export default async function BooksLedgerPage({
         agent.
       </p>
     </div>
+    </>
   );
 }

@@ -3,63 +3,64 @@
 @tailwind utilities;
 
 :root {
-  /* LIGHT — evergreen ledger: cool paper canvas, white cards, slate ink,
-     evergreen as the primary action colour. Accounting software, not a magazine. */
-  --paper-rgb: 246 248 250;      /* app canvas #F6F8FA */
-  --paper-dim-rgb: 238 242 246;  /* subtle fills / zebra rows */
+  /* LIGHT — Cash Now portal: pale green-grey canvas, white cards, green-black
+     ink, vivid money-green as the primary action colour. (Claude Design:
+     "Cash Now Portal", green accent.) */
+  --paper-rgb: 244 247 245;      /* canvas #F4F7F5 */
+  --paper-dim-rgb: 240 244 241;  /* surface-2 #F0F4F1 — fills / zebra rows */
   --surface-rgb: 255 255 255;    /* cards, tables, inputs */
-  --ink-rgb: 15 23 42;           /* slate-900 */
-  --ink-soft-rgb: 100 116 139;   /* slate-500 */
-  --brass-rgb: 176 130 39;       /* logo mark + rare accents only */
+  --ink-rgb: 12 26 20;           /* #0C1A14 green-black */
+  --ink-soft-rgb: 95 110 103;    /* #5F6E67 */
+  --brass-rgb: 176 130 39;       /* legacy accents (admin) only */
   --brass-deep-rgb: 138 100 24;
-  --sand-rgb: 226 232 240;       /* slate-200 tint */
-  --evergreen-rgb: 47 107 79;    /* PRIMARY #2F6B4F */
-  --evergreen-deep-rgb: 33 82 60;/* hover / pressed */
-  --evergreen-soft-rgb: 233 243 238; /* tint bg for active/selected */
-  --line-rgb: 226 232 240;       /* slate-200 borders */
-  --line-strong-rgb: 203 213 225;/* slate-300 dividers */
-  --danger-rgb: 220 38 38;
-  --warning-rgb: 217 119 6;
-  --positive-rgb: 22 163 74;
+  --sand-rgb: 214 223 219;       /* neutral tint */
+  --evergreen-rgb: 0 195 106;    /* PRIMARY #00C36A */
+  --evergreen-deep-rgb: 0 168 91;/* hover / pressed #00A85B */
+  --evergreen-soft-rgb: 228 247 238; /* tint bg #E4F7EE */
+  --line-rgb: 230 236 233;       /* #E6ECE9 borders */
+  --line-strong-rgb: 214 223 219;/* #D6DFDB dividers */
+  --danger-rgb: 229 72 77;       /* #E5484D */
+  --warning-rgb: 216 145 43;     /* #D8912B */
+  --positive-rgb: 18 165 90;     /* #12A55A */
 
-  /* dark workstation sidebar — same in light + dark */
-  --sidebar-rgb: 15 27 22;       /* deep evergreen-slate */
-  --sidebar-fg-rgb: 226 232 237;
-  --sidebar-muted-rgb: 130 148 140;
-  --sidebar-active-rgb: 32 52 43;
-  --sidebar-border-rgb: 32 45 39;
+  /* deep green-navy sidebar — same in light + dark */
+  --sidebar-rgb: 12 32 26;       /* navy #0C201A */
+  --sidebar-fg-rgb: 220 233 227; /* #DCE9E3 */
+  --sidebar-muted-rgb: 138 162 152; /* #8AA298 */
+  --sidebar-active-rgb: 18 51 42;   /* navy-2 #12332A */
+  --sidebar-border-rgb: 18 51 42;
 
-  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-sans: "Manrope", system-ui, -apple-system, sans-serif;
 
-  --ring: 47 107 79;
+  --ring: 0 168 91;
 }
 
 .dark {
-  /* DARK — slate workstation */
-  --paper-rgb: 9 13 20;
-  --paper-dim-rgb: 17 23 33;
-  --surface-rgb: 20 27 38;
-  --ink-rgb: 226 232 240;
-  --ink-soft-rgb: 148 163 184;
+  /* DARK — green-black workstation */
+  --paper-rgb: 8 12 10;          /* canvas #080C0A */
+  --paper-dim-rgb: 22 33 27;     /* surface-2 #16211B */
+  --surface-rgb: 17 26 21;       /* #111A15 */
+  --ink-rgb: 231 239 234;        /* #E7EFEA */
+  --ink-soft-rgb: 139 154 145;   /* #8B9A91 */
   --brass-rgb: 198 152 60;
   --brass-deep-rgb: 214 170 84;
-  --sand-rgb: 40 51 66;
-  --evergreen-rgb: 74 158 118;
-  --evergreen-deep-rgb: 96 178 138;
-  --evergreen-soft-rgb: 24 40 33;
-  --line-rgb: 34 45 61;
-  --line-strong-rgb: 48 62 82;
-  --danger-rgb: 239 110 100;
-  --warning-rgb: 234 160 70;
-  --positive-rgb: 74 190 130;
+  --sand-rgb: 42 56 47;
+  --evergreen-rgb: 44 224 138;   /* #2CE08A — brighter in the dark */
+  --evergreen-deep-rgb: 36 197 120; /* #24C578 */
+  --evergreen-soft-rgb: 19 39 32;   /* #132720 */
+  --line-rgb: 30 42 36;          /* #1E2A24 */
+  --line-strong-rgb: 42 56 47;   /* #2A382F */
+  --danger-rgb: 240 96 95;       /* #F0605F */
+  --warning-rgb: 231 169 74;     /* #E7A94A */
+  --positive-rgb: 44 224 138;    /* #2CE08A */
 
-  --sidebar-rgb: 7 11 16;
-  --sidebar-fg-rgb: 214 224 233;
-  --sidebar-muted-rgb: 120 138 156;
-  --sidebar-active-rgb: 20 32 43;
-  --sidebar-border-rgb: 24 34 47;
+  --sidebar-rgb: 10 19 15;       /* #0A130F */
+  --sidebar-fg-rgb: 220 233 227;
+  --sidebar-muted-rgb: 124 145 136; /* #7C9188 */
+  --sidebar-active-rgb: 19 36 32;   /* #132420 */
+  --sidebar-border-rgb: 19 36 32;
 
-  --ring: 96 178 138;
+  --ring: 44 224 138;
 }
 
 * { border-color: rgb(var(--line-rgb)); }
@@ -79,7 +80,7 @@ body {
 .tnum { font-variant-numeric: lining-nums tabular-nums; }
 
 @layer base {
-  h1, h2, h3, h4 { letter-spacing: -0.011em; }
+  h1, h2, h3, h4 { letter-spacing: -0.02em; }
 }
 
 @layer components {
@@ -89,9 +90,11 @@ body {
     @apply inline-flex items-center gap-2 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-ink-soft;
   }
 
-  /* ---- buttons (pill-shaped, per Stitch shape system) ---- */
+  /* ---- buttons (pill-shaped) ----
+     Cash Now: deep navy text on the vivid green — white on #00C36A fails
+     contrast (≈2.2:1); navy #0C201A clears 7:1 in both themes. */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-full bg-evergreen px-5 py-2.5 text-sm font-semibold text-white
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-evergreen px-5 py-2.5 text-sm font-bold text-sidebar
            shadow-xs transition-all duration-150 hover:bg-evergreen-deep
            focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-evergreen
            disabled:cursor-not-allowed disabled:opacity-50;
@@ -161,7 +164,7 @@ body {
     @apply text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-ink-soft;
   }
   .kpi-value {
-    @apply tnum mt-1.5 text-2xl font-semibold tracking-tight text-ink;
+    @apply tnum mt-1.5 text-2xl font-extrabold tracking-tight text-ink;
   }
 
   /* ---- data table ---- */
@@ -174,7 +177,7 @@ body {
   .data-table .num { @apply tnum text-right; }
 
   /* ---- page header ---- */
-  .page-title { @apply text-xl font-semibold tracking-tight text-ink; }
+  .page-title { @apply text-xl font-extrabold tracking-[-0.02em] text-ink; }
   .breadcrumb { @apply flex items-center gap-1.5 text-[0.8rem] text-ink-soft; }
 
   /* ---- sidebar nav ---- */
@@ -186,8 +189,8 @@ body {
            hover:bg-sidebar-active hover:text-sidebar-fg;
   }
   .sidebar-link-active {
-    @apply bg-sidebar-active text-white;
-    box-shadow: inset -3px 0 0 0 rgb(var(--evergreen-rgb));
+    @apply bg-sidebar-active text-sidebar-fg;
+    box-shadow: inset 3px 0 0 0 rgb(var(--evergreen-rgb));
   }
 
   /* ---- badges (pill status indicators) ---- */

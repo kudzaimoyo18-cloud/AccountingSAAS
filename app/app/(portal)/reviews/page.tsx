@@ -67,7 +67,7 @@ export default async function ReviewPage() {
                         name="account_code"
                         aria-label="Re-assign account"
                         defaultValue={t.accountCode ?? ""}
-                        className="rounded-xl border border-line bg-paper px-3 py-2 text-sm text-ink focus:border-brass focus:outline-none"
+                        className="rounded-xl border border-line bg-paper px-3 py-2 text-sm text-ink focus:border-evergreen focus:outline-none"
                       >
                         {accounts.map((a) => (
                           <option key={a.code} value={a.code}>{a.name}</option>

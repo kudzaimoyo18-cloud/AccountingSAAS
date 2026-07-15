@@ -107,7 +107,7 @@ export default async function CustomersPage({
               {active.map((c) => (
                 <tr key={c.id}>
                   <td className="px-4 py-3">
-                    <Link href={`/app/customers/${c.id}`} className="font-medium text-brass-deep hover:underline">
+                    <Link href={`/app/customers/${c.id}`} className="font-medium text-evergreen-deep hover:underline">
                       {c.name}
                     </Link>
                   </td>
@@ -119,7 +119,7 @@ export default async function CustomersPage({
                   </td>
                   <td className="tnum px-4 py-3 text-right">
                     {(outstanding.get(c.id) ?? 0) > 0 ? (
-                      <span className="font-medium text-brass-deep">
+                      <span className="font-medium text-warning">
                         {moneyExact(outstanding.get(c.id) ?? 0, region)}
                       </span>
                     ) : (

@@ -37,7 +37,7 @@ export default async function SettingsPage() {
         <div className="card mt-5">
           <div className="flex items-center justify-between">
             <h2 className="font-display text-lg font-medium">Plan</h2>
-            <span className="badge bg-brass/10 text-brass-deep">
+            <span className="badge bg-evergreen/10 text-evergreen-deep">
               {tier?.name ?? company.plan}
             </span>
           </div>
@@ -47,7 +47,7 @@ export default async function SettingsPage() {
           </p>
           <p className="mt-3 text-sm text-ink-soft">
             Pay securely via Ziina on the{" "}
-            <a href="/app/billing" className="text-brass-deep underline underline-offset-4">
+            <a href="/app/billing" className="text-evergreen-deep underline underline-offset-4">
               billing page
             </a>
             . Your founding-member rate is locked.

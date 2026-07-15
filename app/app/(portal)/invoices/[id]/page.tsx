@@ -65,7 +65,7 @@ export default async function InvoiceDetailPage({
         <div className="flex flex-wrap justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.14em] text-ink-soft">Billed to</p>
-            <Link href={`/app/customers/${customer.id}`} className="mt-1 block font-medium text-brass-deep hover:underline">
+            <Link href={`/app/customers/${customer.id}`} className="mt-1 block font-medium text-evergreen-deep hover:underline">
               {customer.name}
             </Link>
             {customer.trn && <p className="text-xs text-ink-soft">TRN {customer.trn}</p>}

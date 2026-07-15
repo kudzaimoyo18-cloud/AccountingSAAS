@@ -1,39 +1,98 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
+import { createClient } from "@/lib/supabase/client";
 import { captureReceipt } from "@/lib/books/capture-actions";
 
 // Camera-first capture: the button opens the phone's own camera (rear lens) via
-// the `capture` attribute; picking/taking a photo auto-submits to the server
-// action which stores it and runs AI extraction. On desktop the same control
-// falls back to a normal file picker.
-export function CaptureUpload() {
+// the `capture` attribute. The photo is uploaded to Supabase Storage straight
+// from the browser (storage RLS scopes writes to the caller's company folder),
+// and only the storage PATH is submitted to the server action — the action
+// request stays a few hundred bytes, so Vercel's ~4.5MB function body cap can
+// never 413 a large photo again. On desktop the same control falls back to a
+// normal file picker.
+
+const MAX_BYTES = 15 * 1024 * 1024;
+
+export function CaptureUpload({ companyId }: { companyId: string }) {
   const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const pathRef = useRef<HTMLInputElement>(null);
+  const typeRef = useRef<HTMLInputElement>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handlePick(file: File) {
+    setError(null);
+    if (file.size === 0) return;
+    if (file.size > MAX_BYTES) {
+      setError("Photo too large (max 15MB) — try again without RAW mode.");
+      return;
+    }
+
+    setUploading(true);
+    const mediaType = file.type || "application/octet-stream";
+    const ext =
+      mediaType === "image/png" ? "png" : mediaType === "application/pdf" ? "pdf" : "jpg";
+    const path = `${companyId}/${Date.now()}-capture.${ext}`;
+
+    const supabase = createClient();
+    const { error: upErr } = await supabase.storage
+      .from("documents")
+      .upload(path, file, { contentType: mediaType });
+
+    if (upErr) {
+      console.error("[capture] upload:", upErr.message);
+      setError("Upload failed — check your connection and try again.");
+      setUploading(false);
+      return;
+    }
+
+    if (pathRef.current) pathRef.current.value = path;
+    if (typeRef.current) typeRef.current.value = mediaType;
+    if (nameRef.current) nameRef.current.value = file.name || `capture.${ext}`;
+    // Hand over to the server action; `uploading` stays true so the busy panel
+    // holds until the action's own pending state takes over (no setState while
+    // the action is pending — that resets useFormStatus on Next 15.5).
+    formRef.current?.requestSubmit();
+  }
 
   return (
-    <form ref={formRef} action={captureReceipt}>
-      <input
-        ref={inputRef}
-        type="file"
-        name="photo"
-        accept="image/*,application/pdf"
-        capture="environment"
-        className="hidden"
-        onChange={(e) => {
-          if (e.currentTarget.files?.length) formRef.current?.requestSubmit();
-        }}
-      />
-      <CaptureButton onPick={() => inputRef.current?.click()} />
-    </form>
+    <div>
+      <form ref={formRef} action={captureReceipt}>
+        <input type="hidden" name="path" ref={pathRef} />
+        <input type="hidden" name="media_type" ref={typeRef} />
+        <input type="hidden" name="original_name" ref={nameRef} />
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*,application/pdf"
+          capture="environment"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.currentTarget.files?.[0];
+            e.currentTarget.value = "";
+            if (file) void handlePick(file);
+          }}
+        />
+        <CaptureButton uploading={uploading} onPick={() => inputRef.current?.click()} />
+      </form>
+      {error && (
+        <p role="alert" className="mt-3 text-sm text-danger">
+          {error}
+        </p>
+      )}
+    </div>
   );
 }
 
-function CaptureButton({ onPick }: { onPick: () => void }) {
+function CaptureButton({ uploading, onPick }: { uploading: boolean; onPick: () => void }) {
   const { pending } = useFormStatus();
+  const busy = uploading || pending;
 
-  if (pending) {
+  if (busy) {
     return (
       <div className="panel flex flex-col items-center gap-4 px-6 py-12 text-center">
         <div className="relative h-14 w-14">
@@ -43,9 +102,13 @@ function CaptureButton({ onPick }: { onPick: () => void }) {
           </div>
         </div>
         <div>
-          <p className="text-sm font-semibold text-ink">Reading your receipt…</p>
+          <p className="text-sm font-semibold text-ink">
+            {pending ? "Reading your receipt…" : "Uploading your photo…"}
+          </p>
           <p className="mt-1 text-[0.82rem] text-ink-soft">
-            Uploading and drafting the ledger line. This takes a few seconds.
+            {pending
+              ? "Drafting the ledger line. This takes a few seconds."
+              : "Sending it securely to your documents."}
           </p>
         </div>
       </div>
@@ -58,7 +121,7 @@ function CaptureButton({ onPick }: { onPick: () => void }) {
       onClick={onPick}
       className="panel flex w-full flex-col items-center gap-4 px-6 py-12 text-center transition-colors hover:border-evergreen/50 active:bg-paper-dim"
     >
-      <span className="grid h-16 w-16 place-items-center rounded-full bg-evergreen text-white shadow-raised">
+      <span className="grid h-16 w-16 place-items-center rounded-full bg-evergreen text-sidebar shadow-raised">
         <CameraIcon className="h-7 w-7" />
       </span>
       <span>

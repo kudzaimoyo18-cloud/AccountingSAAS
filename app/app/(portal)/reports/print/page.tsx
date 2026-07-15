@@ -35,12 +35,12 @@ export default async function PrintReport() {
 
       <section className="mt-8">
         <h2 className="font-display text-lg font-semibold">Profit &amp; loss</h2>
-        <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-brass-deep">Income</p>
+        <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-ink-soft">Income</p>
         {reports.incomeLines.map((l) => (
           <Row key={l.code} a={l.name} b={money(l.amount, company.region)} />
         ))}
         <Row a="Total revenue" b={money(reports.revenue, company.region)} strong />
-        <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-brass-deep">Expenses</p>
+        <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">Expenses</p>
         {reports.expenseLines.map((l) => (
           <Row key={l.code} a={l.name} b={`−${money(l.amount, company.region)}`} />
         ))}

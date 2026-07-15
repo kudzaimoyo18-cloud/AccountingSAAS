@@ -70,7 +70,7 @@ export function AssistantFab() {
           type="button"
           onClick={() => setOpen(true)}
           aria-label="Ask the assistant"
-          className="fixed bottom-[calc(5.75rem+env(safe-area-inset-bottom))] right-4 z-40 grid h-14 w-14 place-items-center rounded-full bg-evergreen text-white shadow-lift transition-transform hover:bg-evergreen-deep active:scale-95 md:bottom-6 md:right-6 print:hidden"
+          className="fixed right-4 z-40 hidden h-14 w-14 place-items-center rounded-full bg-evergreen text-sidebar shadow-lift transition-transform hover:bg-evergreen-deep active:scale-95 md:grid md:bottom-6 md:right-6 print:hidden"
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
             <path
@@ -142,7 +142,7 @@ export function AssistantFab() {
                     <div
                       className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm ${
                         m.role === "user"
-                          ? "bg-evergreen text-white"
+                          ? "bg-evergreen text-sidebar"
                           : "border border-line bg-paper-dim text-ink"
                       }`}
                     >

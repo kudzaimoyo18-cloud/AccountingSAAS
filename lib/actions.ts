@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getActiveCompany } from "@/lib/books/repo";
 
 const FREE_ZONES = [
   "IFZA", "DMCC", "Meydan", "SHAMS", "RAKEZ", "DAFZA", "JAFZA", "ADGM", "DIFC", "Mainland", "Other",
@@ -53,46 +54,40 @@ export async function createCompany(formData: FormData) {
   redirect("/app");
 }
 
-export async function uploadDocument(formData: FormData) {
+// The browser uploads the file straight to Supabase Storage (storage RLS
+// scopes writes to the caller's company folder) and this action only records
+// the path — the request body stays tiny, so Vercel's ~4.5MB function cap
+// can't 413 a large file. Company comes from the session, never a form field.
+export async function recordDocument(formData: FormData) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const file = formData.get("file") as File | null;
+  const company = await getActiveCompany();
+  if (!company) redirect("/app/onboarding");
+
+  const path = String(formData.get("path") ?? "");
   const kind = String(formData.get("kind") ?? "other");
-  const companyId = String(formData.get("company_id") ?? "");
+  const originalName = String(formData.get("original_name") ?? "").slice(0, 200);
 
-  if (!file || file.size === 0) redirect("/app/documents?error=Choose+a+file");
-  if (file.size > 15 * 1024 * 1024)
-    redirect("/app/documents?error=File+too+large+(max+15MB)");
-  if (!companyId) redirect("/app/documents?error=Missing+company");
-
-  const safeName = file.name.replace(/[^\w.\- ]+/g, "_").slice(0, 140);
-  const path = `${companyId}/${Date.now()}-${safeName}`;
-
-  const { error: upErr } = await supabase.storage
-    .from("documents")
-    .upload(path, file, { contentType: file.type || "application/octet-stream" });
-
-  if (upErr) {
-    console.error("[uploadDocument] storage:", upErr.message);
-    redirect("/app/documents?error=Upload+failed");
+  if (!path || !path.startsWith(`${company.id}/`) || path.includes("..")) {
+    redirect("/app/documents?error=Choose+a+file");
   }
 
   const { error: dbErr } = await supabase.from("documents").insert({
-    company_id: companyId,
+    company_id: company.id,
     uploaded_by: user.id,
     storage_path: path,
-    original_name: file.name.slice(0, 200),
+    original_name: originalName || path.split("/").pop() || "document",
     kind: ["invoice", "receipt", "bank_statement", "other"].includes(kind)
       ? kind
       : "other",
   });
 
   if (dbErr) {
-    console.error("[uploadDocument] db:", dbErr.message);
+    console.error("[recordDocument] db:", dbErr.message);
     redirect("/app/documents?error=Could+not+record+document");
   }
 

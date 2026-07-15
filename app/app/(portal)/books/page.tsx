@@ -59,13 +59,13 @@ export default async function BooksPage({
         {!imported && reports.reviewCount > 0 && (
           <Link
             href="/app/reviews"
-            className="mt-4 flex items-center justify-between rounded-2xl border border-brass/40 bg-brass/5 px-5 py-3.5 transition-colors hover:bg-brass/10"
+            className="mt-4 flex items-center justify-between rounded-2xl border border-warning/40 bg-warning/5 px-5 py-3.5 transition-colors hover:bg-warning/10"
           >
             <span className="text-sm">
-              <span className="font-semibold text-brass-deep">{reports.reviewCount}</span> transaction
+              <span className="font-semibold text-warning">{reports.reviewCount}</span> transaction
               {reports.reviewCount === 1 ? "" : "s"} need a quick review before they hit your books.
             </span>
-            <span className="text-sm font-medium text-brass-deep">Review →</span>
+            <span className="text-sm font-medium text-warning">Review →</span>
           </Link>
         )}
 
@@ -184,7 +184,7 @@ function ImportResult({ total, auto, review }: { total: number; auto: number; re
             <span className="font-medium text-evergreen">{auto} auto-categorised by AI</span>
             {review > 0 ? (
               <>
-                {" "}· <span className="font-medium text-brass-deep">{review} flagged for your quick review</span>
+                {" "}· <span className="font-medium text-warning">{review} flagged for your quick review</span>
               </>
             ) : (
               <> · nothing needs your review</>
@@ -201,10 +201,10 @@ function ImportResult({ total, auto, review }: { total: number; auto: number; re
           </Link>
         )}
       </div>
-      {/* visual 90/10 split: evergreen = AI auto-posted, brass = needs you */}
+      {/* visual 90/10 split: evergreen = AI auto-posted, amber = needs you */}
       <div className="flex h-1.5 w-full" aria-hidden>
         <div className="bg-evergreen" style={{ width: `${pct}%` }} />
-        <div className="bg-brass" style={{ width: `${100 - pct}%` }} />
+        <div className="bg-warning" style={{ width: `${100 - pct}%` }} />
       </div>
     </div>
   );

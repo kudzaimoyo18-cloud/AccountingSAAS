@@ -121,7 +121,7 @@ export default async function CustomerDetailPage({
               {invoices.map((inv) => (
                 <li key={inv.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5">
                   <div>
-                    <Link href={`/app/invoices/${inv.id}`} className="text-sm font-medium text-brass-deep hover:underline">
+                    <Link href={`/app/invoices/${inv.id}`} className="text-sm font-medium text-evergreen-deep hover:underline">
                       {inv.number}
                     </Link>
                     <p className="mt-0.5 text-xs text-ink-soft">

@@ -96,7 +96,7 @@ export default async function ClosePage({
               <Link href="/app/reports/print" className="btn-ghost">Print / PDF</Link>
             </div>
             <form action={generateTaxPack} className="mt-3">
-              <button type="submit" className="text-sm font-medium text-brass-deep hover:underline">
+              <button type="submit" className="text-sm font-medium text-evergreen-deep hover:underline">
                 Mark this period as closed →
               </button>
             </form>
