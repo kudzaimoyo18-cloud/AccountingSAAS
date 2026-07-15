@@ -1,14 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Manrope } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { PwaRegister } from "@/components/PwaRegister";
 import "./globals.css";
 
 // Single all-business sans across the whole product — headings, body, and
-// tabular figures. No serif anywhere: this is finance software, not a magazine.
-const sans = Inter({
+// tabular figures (Cash Now design language). No serif anywhere.
+const sans = Manrope({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700", "800"],
   variable: "--font-sans",
   display: "swap",
 });

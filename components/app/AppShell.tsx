@@ -6,12 +6,12 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { signOut } from "@/lib/actions";
 import { MobileTabBar } from "@/components/app/MobileTabBar";
 import { AssistantFab } from "@/components/app/AssistantFab";
-import { Logo } from "@/components/Logo";
 
 type Item = { href: string; label: string; icon: string; exact?: boolean };
 type Group = { label: string; items: Item[] };
 
-// Grouped, workstation-style navigation mapped to real routes only.
+// Grouped navigation per the Cash Now design (Overview · Money · Insights),
+// mapped to real routes only. Capture lives in the sidebar CTA, not the nav.
 const GROUPS: Group[] = [
   {
     label: "Overview",
@@ -20,32 +20,21 @@ const GROUPS: Group[] = [
     ],
   },
   {
-    label: "Bookkeeping",
+    label: "Money",
     items: [
-      { href: "/app/capture", label: "Snap receipt", icon: "M2 5.5h2.5L6 3.5h4l1.5 2H14a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5H2a.5.5 0 0 1-.5-.5V6a.5.5 0 0 1 .5-.5zM8 7.2a2.3 2.3 0 1 0 0 4.6 2.3 2.3 0 0 0 0-4.6z" },
       { href: "/app/books/ledger", label: "Ledger", icon: "M3 2h8l2 2v10H3zM6 6h5M6 9h5M6 12h3" },
+      { href: "/app/invoices", label: "Invoices", icon: "M4 2h8v12l-2-1.3L8 14l-2-1.3L4 14zM6.2 5.5h3.6M6.2 8h3.6" },
+      { href: "/app/customers", label: "Customers", icon: "M8 7.5a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2zM2.8 13.7c.6-2.8 2.6-4.2 5.2-4.2s4.6 1.4 5.2 4.2" },
       { href: "/app/documents", label: "Documents", icon: "M4 2h5l3 3v9H4zM9 2v3h3" },
       { href: "/app/books/import", label: "Import", icon: "M8 2v8M5 7l3 3 3-3M3 13h10" },
       { href: "/app/reviews", label: "Reviews", icon: "M2 8l3.5 3.5L14 3M2 13h12" },
     ],
   },
   {
-    label: "Sales",
-    items: [
-      { href: "/app/customers", label: "Customers", icon: "M8 7.5a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2zM2.8 13.7c.6-2.8 2.6-4.2 5.2-4.2s4.6 1.4 5.2 4.2" },
-      { href: "/app/invoices", label: "Invoices", icon: "M4 2h8v12l-2-1.3L8 14l-2-1.3L4 14zM6.2 5.5h3.6M6.2 8h3.6" },
-    ],
-  },
-  {
-    label: "Accounting",
+    label: "Insights",
     items: [
       { href: "/app/reports", label: "Reports", icon: "M3 13V7M8 13V3M13 13v-4" },
       { href: "/app/books/close", label: "Period close", icon: "M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zM8 4v4l3 2" },
-    ],
-  },
-  {
-    label: "Tools",
-    items: [
       { href: "/app/assistant", label: "Assistant", icon: "M8 2a5 5 0 0 0-5 5c0 1.6.8 3 2 4v2h6v-2c1.2-1 2-2.4 2-4a5 5 0 0 0-5-5zM6.5 14h3" },
     ],
   },
@@ -133,9 +122,9 @@ export function AppShell({
     <div className="flex min-h-screen bg-paper">
       {/* dark workstation sidebar — Stitch layout, evergreen palette */}
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col overflow-y-auto border-r border-sidebar-border bg-sidebar px-3 py-4 md:flex print:hidden">
-        {/* logo block: icon tile + wordmark + tenant subtitle */}
+        {/* logo block: green icon tile + wordmark + tenant subtitle */}
         <Link href="/" aria-label="Mizan home" className="flex items-center gap-3 px-2 py-1">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sidebar-active text-brass">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-evergreen text-sidebar">
             <svg width="22" height="22" viewBox="0 0 26 26" fill="none" aria-hidden="true">
               <path d="M13 3v18M6 21h14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
               <path d="M13 6 5 9m8-3 8 3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
@@ -178,31 +167,20 @@ export function AppShell({
           )}
         </nav>
 
-        {/* bottom block: audit-pack CTA + support links (Stitch layout) */}
+        {/* bottom block: Snap-receipt CTA (the hero action, per Cash Now) +
+            utility links + user row */}
         <div className="mt-2 flex flex-col border-t border-sidebar-border pt-3">
-          <a
-            href="/app/books/pack"
-            className="btn-primary btn-glow w-full"
-            title="Download the audit pack (CSV + documents index)"
-          >
+          <Link href="/app/capture" prefetch className="btn-primary btn-glow w-full" title="Snap a receipt">
             <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden>
-              <path d="M8 2v8M5 7l3 3 3-3M3 13h10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M2 5.5h2.5L6 3.5h4l1.5 2H14a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5H2a.5.5 0 0 1-.5-.5V6a.5.5 0 0 1 .5-.5zM8 7.2a2.3 2.3 0 1 0 0 4.6 2.3 2.3 0 0 0 0-4.6z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            Download audit pack
-          </a>
+            Snap receipt
+          </Link>
 
           <div className="mt-3 flex flex-col gap-0.5 border-t border-sidebar-border pt-3">
             {BOTTOM.map((item) => (
               <NavLink key={item.href} item={item} active={isActive(item)} />
             ))}
-            <Link href="/app/assistant" className="sidebar-link">
-              <NavIcon d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zM6 6a2 2 0 0 1 3.9.6c0 1.3-2 1.6-2 2.9M8 12h.01" />
-              Support
-            </Link>
-            <a href="/#how" className="sidebar-link">
-              <NavIcon d="M2 3h5a2 2 0 0 1 2 2v8a2 2 0 0 0-2-2H2zM14 3H9a2 2 0 0 0-2 2v8a2 2 0 0 1 2-2h5z" />
-              Documentation
-            </a>
             <div className="mt-2 flex items-center justify-between px-3">
               <ThemeToggle />
               <form action={signOut}>
@@ -215,6 +193,27 @@ export function AppShell({
               </form>
             </div>
           </div>
+
+          {/* user row (Cash Now bottom-of-sidebar pattern) */}
+          <Link
+            href="/app/settings"
+            className="mt-3 flex items-center gap-2.5 border-t border-sidebar-border px-2 pt-3 transition-colors hover:text-sidebar-fg"
+          >
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sidebar-active text-[0.7rem] font-extrabold text-evergreen">
+              {initials}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-[0.82rem] font-bold text-sidebar-fg">
+                {userEmail ?? "Account"}
+              </span>
+              <span className="block truncate text-[0.7rem] text-sidebar-muted">
+                {companyName ?? "Your company"}
+              </span>
+            </span>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden className="shrink-0 text-sidebar-muted">
+              <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </Link>
         </div>
       </aside>
 
@@ -264,17 +263,22 @@ export function AppShell({
               href="/app/settings"
               title={userEmail ?? "Account"}
               aria-label="Account settings"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-line-strong bg-evergreen-soft text-[0.72rem] font-bold text-evergreen-deep transition-shadow hover:shadow-raised"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-evergreen-soft text-[0.72rem] font-extrabold text-evergreen-deep transition-shadow hover:shadow-raised"
             >
               {initials}
             </Link>
           </div>
         </header>
 
-        {/* mobile top bar — logo only; navigation lives in the bottom tab bar */}
+        {/* mobile top bar — green mark + wordmark; nav lives in the tab bar */}
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line bg-surface/95 px-4 backdrop-blur-md md:hidden print:hidden">
-          <Link href="/" aria-label="Mizan home">
-            <Logo />
+          <Link href="/" aria-label="Mizan home" className="flex items-center gap-2.5">
+            <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-evergreen text-sidebar">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path d="M7 15c0-2.5 2-4 5-4s5-1.5 5-4M7 9c0 2.5 2 4 5 4M12 3v18" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+              </svg>
+            </span>
+            <span className="text-lg font-extrabold tracking-tight text-ink">Mizan</span>
           </Link>
           <ThemeToggle />
         </header>

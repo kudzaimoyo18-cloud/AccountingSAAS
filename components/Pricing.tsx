@@ -27,7 +27,7 @@ export function Pricing() {
               }`}
             >
               {t.highlight && (
-                <span className="absolute -top-3 left-7 rounded-md bg-evergreen px-2.5 py-1 text-xs font-semibold text-white">
+                <span className="absolute -top-3 left-7 rounded-md bg-evergreen px-2.5 py-1 text-xs font-semibold text-sidebar">
                   Most popular
                 </span>
               )}

@@ -68,12 +68,12 @@ export default async function ReportsPage() {
             {/* P&L */}
             <section className="card">
               <h2 className="font-display text-lg font-semibold">Profit &amp; loss</h2>
-              <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-brass-deep">
+              <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-ink-soft">
                 Income
               </p>
               <Rows rows={pnl.income} />
               <Subtotal label="Total income" value={money(pnl.totalIncome)} />
-              <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-brass-deep">
+              <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">
                 Expenses
               </p>
               <Rows rows={pnl.expense} />
@@ -99,17 +99,17 @@ export default async function ReportsPage() {
                     {bs.balanced ? "✓ balanced" : "⚠ check"}
                   </span>
                 </div>
-                <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-brass-deep">
+                <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-ink-soft">
                   Assets
                 </p>
                 <Rows rows={bs.assets} />
                 <Subtotal label="Total assets" value={money(bs.totalAssets)} />
-                <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-brass-deep">
+                <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">
                   Liabilities
                 </p>
                 <Rows rows={bs.liabilities} />
                 <Subtotal label="Total liabilities" value={money(bs.totalLiabilities)} />
-                <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-brass-deep">
+                <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-ink-soft">
                   Equity
                 </p>
                 <Rows rows={bs.equity} />

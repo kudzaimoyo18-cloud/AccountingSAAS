@@ -107,7 +107,7 @@ export function Assistant({
                 <div
                   className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm ${
                     m.role === "user"
-                      ? "bg-evergreen text-white"
+                      ? "bg-evergreen text-sidebar"
                       : "border border-line bg-surface text-ink"
                   }`}
                 >

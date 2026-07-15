@@ -121,7 +121,7 @@ function CaptureButton({ uploading, onPick }: { uploading: boolean; onPick: () =
       onClick={onPick}
       className="panel flex w-full flex-col items-center gap-4 px-6 py-12 text-center transition-colors hover:border-evergreen/50 active:bg-paper-dim"
     >
-      <span className="grid h-16 w-16 place-items-center rounded-full bg-evergreen text-white shadow-raised">
+      <span className="grid h-16 w-16 place-items-center rounded-full bg-evergreen text-sidebar shadow-raised">
         <CameraIcon className="h-7 w-7" />
       </span>
       <span>

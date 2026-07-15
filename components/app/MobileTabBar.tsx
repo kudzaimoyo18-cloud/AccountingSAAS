@@ -13,21 +13,21 @@ import { signOut } from "@/lib/actions";
 
 type Item = { href: string; label: string; icon: string; exact?: boolean };
 
+// Cash Now mobile IA: Home · Money · Scan · Insights · Profile.
 const TABS: Item[] = [
   { href: "/app", label: "Home", exact: true, icon: "M2 8.5 8 3l6 5.5M3.5 7.5V13h3v-3h3v3h3V7.5" },
-  { href: "/app/books", label: "Books", icon: "M3 2h8l2 2v10H3zM6 6h5M6 9h5M6 12h3" },
-  { href: "/app/capture", label: "Snap", icon: "M2 5.5h2.5L6 3.5h4l1.5 2H14a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5H2a.5.5 0 0 1-.5-.5V6a.5.5 0 0 1 .5-.5zM8 7.2a2.3 2.3 0 1 0 0 4.6 2.3 2.3 0 0 0 0-4.6z" },
-  { href: "/app/reports", label: "Reports", icon: "M3 13V7M8 13V3M13 13v-4" },
+  { href: "/app/books/ledger", label: "Money", icon: "M3 2h8l2 2v10H3zM6 6h5M6 9h5M6 12h3" },
+  { href: "/app/capture", label: "Scan", icon: "M2 5.5h2.5L6 3.5h4l1.5 2H14a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5H2a.5.5 0 0 1-.5-.5V6a.5.5 0 0 1 .5-.5zM8 7.2a2.3 2.3 0 1 0 0 4.6 2.3 2.3 0 0 0 0-4.6z" },
+  { href: "/app/reports", label: "Insights", icon: "M3 13V7M8 13V3M13 13v-4" },
 ];
 
 const MORE_ITEMS: Item[] = [
-  { href: "/app/customers", label: "Customers", icon: "M8 7.5a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2zM2.8 13.7c.6-2.8 2.6-4.2 5.2-4.2s4.6 1.4 5.2 4.2" },
   { href: "/app/invoices", label: "Invoices", icon: "M4 2h8v12l-2-1.3L8 14l-2-1.3L4 14zM6.2 5.5h3.6M6.2 8h3.6" },
+  { href: "/app/customers", label: "Customers", icon: "M8 7.5a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2zM2.8 13.7c.6-2.8 2.6-4.2 5.2-4.2s4.6 1.4 5.2 4.2" },
   { href: "/app/documents", label: "Documents", icon: "M4 2h5l3 3v9H4zM9 2v3h3" },
   { href: "/app/books/import", label: "Import", icon: "M8 2v8M5 7l3 3 3-3M3 13h10" },
   { href: "/app/reviews", label: "Reviews", icon: "M2 8l3.5 3.5L14 3M2 13h12" },
   { href: "/app/books/close", label: "Period close", icon: "M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zM8 4v4l3 2" },
-  { href: "/app/reports", label: "Reports", icon: "M3 13V7M8 13V3M13 13v-4" },
   { href: "/app/billing", label: "Billing", icon: "M2 4h12v8H2zM2 7h12" },
   { href: "/app/settings", label: "Settings", icon: "M8 5.5A2.5 2.5 0 1 0 8 10.5 2.5 2.5 0 0 0 8 5.5zM8 1v2M8 13v2M15 8h-2M3 8H1M12.95 3.05l-1.4 1.4M4.46 11.54l-1.41 1.41M12.95 12.95l-1.4-1.4M4.46 4.46 3.05 3.05" },
 ];
@@ -96,19 +96,19 @@ export function MobileTabBar({ isAdmin = false }: { isAdmin?: boolean }) {
         <button
           type="button"
           onClick={() => setMoreOpen(true)}
-          aria-label="More"
+          aria-label="Profile"
           aria-haspopup="dialog"
           aria-expanded={moreOpen}
           className={pillClasses(moreActive)}
         >
-          <Icon d="M3 3h3v3H3zM10 3h3v3h-3zM3 10h3v3H3zM10 10h3v3h-3z" />
-          {label("More", moreActive)}
+          <Icon d="M8 7.5a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2zM2.8 13.7c.6-2.8 2.6-4.2 5.2-4.2s4.6 1.4 5.2 4.2" />
+          {label("Profile", moreActive)}
         </button>
       </nav>
 
       {/* More sheet */}
       {moreOpen && (
-        <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-label="More">
+        <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-label="Profile">
           <button
             aria-label="Close"
             onClick={() => setMoreOpen(false)}
@@ -119,7 +119,7 @@ export function MobileTabBar({ isAdmin = false }: { isAdmin?: boolean }) {
               <span className="h-1 w-10 rounded-full bg-line-strong" />
             </div>
             <div className="flex items-center justify-between px-5 pb-3 pt-3">
-              <p className="text-sm font-semibold text-ink">More</p>
+              <p className="text-sm font-semibold text-ink">Profile</p>
               <ThemeToggle />
             </div>
             <div className="grid grid-cols-3 gap-1 px-3 pb-2">
