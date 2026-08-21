@@ -7,6 +7,7 @@ import {
   updateLedgerEntry,
   setLedgerStatus,
   deleteLedgerEntry,
+  reverseLedgerEntry,
 } from "@/lib/books/ledger-actions";
 
 // Stitch-style audit table: read-first rows, click a row to open the detail
@@ -26,6 +27,8 @@ export type LedgerRow = {
   source: string;
   status: string;
   document_id: string | null;
+  reversal_of: string | null;
+  reversed_at: string | null;
 };
 
 const DIRECTIONS = [
@@ -88,7 +91,7 @@ export function LedgerTable({
                     onClick={() => setSelectedId(r.id)}
                     className={`cursor-pointer transition-colors ${
                       active ? "!bg-evergreen-soft/70" : ""
-                    }`}
+                    } ${r.reversed_at ? "opacity-60" : ""}`}
                     style={
                       active
                         ? { boxShadow: "inset 3px 0 0 0 rgb(var(--evergreen-rgb))" }
@@ -126,7 +129,15 @@ export function LedgerTable({
                       </span>
                     </td>
                     <td>
-                      <StatusBadge status={r.status} />
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <StatusBadge status={r.status} />
+                        {r.reversed_at && (
+                          <span className="badge badge-neutral">Reversed</span>
+                        )}
+                        {r.reversal_of && (
+                          <span className="badge badge-warning">Reversal</span>
+                        )}
+                      </div>
                     </td>
                     <td className="text-center">
                       {r.document_id ? (
@@ -187,6 +198,28 @@ export function LedgerTable({
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 py-5">
+              {selected.reversed_at && (
+                <div className="alert-banner alert-banner-warning mb-4">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden className="shrink-0">
+                    <path d="M2 8a6 6 0 1 1 1.8 4.3M2 12v-2.5h2.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  Reversed on{" "}
+                  {new Date(selected.reversed_at).toLocaleDateString("en-AE", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                  . The mirror entry keeps your books balanced — both stay in the audit trail.
+                </div>
+              )}
+              {selected.reversal_of && (
+                <div className="alert-banner alert-banner-positive mb-4">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden className="shrink-0">
+                    <path d="M2 8a6 6 0 1 1 1.8 4.3M2 12v-2.5h2.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  This is a reversing entry that cancels an earlier line.
+                </div>
+              )}
               <div className="rounded-2xl bg-paper-dim/70 px-4 py-3">
                 <p className="kpi-label">
                   {selected.direction === "income" ? "Income" : "Expense"} ·{" "}
@@ -317,61 +350,121 @@ export function LedgerTable({
                 </button>
               </form>
 
-              {/* danger zone */}
-              <form
-                action={deleteLedgerEntry}
-                onSubmit={(e) => {
-                  if (!confirm("Delete this ledger line? This cannot be undone.")) {
-                    e.preventDefault();
-                  }
-                }}
-                className="mt-4 text-center"
-              >
-                <input type="hidden" name="id" value={selected.id} />
-                <button
-                  type="submit"
-                  className="text-xs font-medium text-danger hover:underline"
+              {/* danger zone — only unposted (draft/reviewed) lines can be hard
+                  deleted; a posted line is corrected with a reversal instead so
+                  the audit trail is never broken. */}
+              {selected.status !== "approved" && (
+                <form
+                  action={deleteLedgerEntry}
+                  onSubmit={(e) => {
+                    if (!confirm("Delete this ledger line? This cannot be undone.")) {
+                      e.preventDefault();
+                    }
+                  }}
+                  className="mt-4 text-center"
                 >
-                  Delete line
-                </button>
-              </form>
-            </div>
-
-            {/* review actions — the Stitch drawer footer */}
-            <div className="border-t border-line bg-paper-dim/50 px-5 py-4">
-              <div className="flex gap-3">
-                <form action={setLedgerStatus} className="flex-1">
                   <input type="hidden" name="id" value={selected.id} />
-                  <input type="hidden" name="status" value="reviewed" />
-                  <button type="submit" className="btn-ghost w-full">
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden>
-                      <path d="M8 3.5c-3 0-5.3 1.9-6.5 4.5C2.7 10.6 5 12.5 8 12.5s5.3-1.9 6.5-4.5C13.3 5.4 11 3.5 8 3.5zM8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" stroke="currentColor" strokeWidth="1.2" />
-                    </svg>
-                    Mark reviewed
-                  </button>
-                </form>
-                <form action={setLedgerStatus} className="flex-1">
-                  <input type="hidden" name="id" value={selected.id} />
-                  <input type="hidden" name="status" value="approved" />
-                  <button type="submit" className="btn-primary w-full">
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden>
-                      <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zM5 8l2 2 4-4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    Approve
-                  </button>
-                </form>
-              </div>
-              {selected.status !== "draft" && (
-                <form action={setLedgerStatus} className="mt-2 text-center">
-                  <input type="hidden" name="id" value={selected.id} />
-                  <input type="hidden" name="status" value="draft" />
                   <button
                     type="submit"
-                    className="text-xs font-medium text-ink-soft hover:text-ink hover:underline"
+                    className="text-xs font-medium text-danger hover:underline"
                   >
-                    Send back to draft
+                    Delete line
                   </button>
                 </form>
+              )}
+            </div>
+
+            {/* review + correction actions — the Stitch drawer footer */}
+            <div className="border-t border-line bg-paper-dim/50 px-5 py-4">
+              {selected.reversed_at ? (
+                // Already reversed — nothing to action; it lives on for the trail.
+                <p className="text-center text-xs text-ink-soft">
+                  This entry has been reversed. Find its reversing line in the ledger.
+                </p>
+              ) : selected.status === "approved" ? (
+                // Posted line → the correct "clear a mistake" tool is a reversal.
+                <>
+                  {!selected.reversal_of && (
+                    <form action={reverseLedgerEntry}>
+                      <input type="hidden" name="id" value={selected.id} />
+                      <label className="mb-2 flex items-center gap-2 text-[0.8rem] text-ink-soft">
+                        <input
+                          type="checkbox"
+                          name="redraft"
+                          value="1"
+                          className="h-3.5 w-3.5 rounded border-line-strong"
+                        />
+                        Also create a corrected draft to re-enter
+                      </label>
+                      <button
+                        type="submit"
+                        className="btn-primary w-full"
+                        onClick={(e) => {
+                          if (
+                            !confirm(
+                              "Reverse this posted entry? A mirror line is added so the pair nets to zero — both stay in the books.",
+                            )
+                          ) {
+                            e.preventDefault();
+                          }
+                        }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden>
+                          <path d="M2 8a6 6 0 1 1 1.8 4.3M2 12v-2.5h2.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        Reverse entry
+                      </button>
+                    </form>
+                  )}
+                  <form action={setLedgerStatus} className="mt-2 text-center">
+                    <input type="hidden" name="id" value={selected.id} />
+                    <input type="hidden" name="status" value="draft" />
+                    <button
+                      type="submit"
+                      className="text-xs font-medium text-ink-soft hover:text-ink hover:underline"
+                    >
+                      Un-post (send back to draft)
+                    </button>
+                  </form>
+                </>
+              ) : (
+                // Draft / reviewed → move it forward to posting.
+                <>
+                  <div className="flex gap-3">
+                    <form action={setLedgerStatus} className="flex-1">
+                      <input type="hidden" name="id" value={selected.id} />
+                      <input type="hidden" name="status" value="reviewed" />
+                      <button type="submit" className="btn-ghost w-full">
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden>
+                          <path d="M8 3.5c-3 0-5.3 1.9-6.5 4.5C2.7 10.6 5 12.5 8 12.5s5.3-1.9 6.5-4.5C13.3 5.4 11 3.5 8 3.5zM8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" stroke="currentColor" strokeWidth="1.2" />
+                        </svg>
+                        Mark reviewed
+                      </button>
+                    </form>
+                    <form action={setLedgerStatus} className="flex-1">
+                      <input type="hidden" name="id" value={selected.id} />
+                      <input type="hidden" name="status" value="approved" />
+                      <button type="submit" className="btn-primary w-full">
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden>
+                          <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zM5 8l2 2 4-4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        Approve
+                      </button>
+                    </form>
+                  </div>
+                  {selected.status !== "draft" && (
+                    <form action={setLedgerStatus} className="mt-2 text-center">
+                      <input type="hidden" name="id" value={selected.id} />
+                      <input type="hidden" name="status" value="draft" />
+                      <button
+                        type="submit"
+                        className="text-xs font-medium text-ink-soft hover:text-ink hover:underline"
+                      >
+                        Send back to draft
+                      </button>
+                    </form>
+                  )}
+                </>
               )}
             </div>
           </aside>

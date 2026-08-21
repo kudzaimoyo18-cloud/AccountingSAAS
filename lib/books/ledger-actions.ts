@@ -362,3 +362,123 @@ export async function deleteLedgerEntry(formData: FormData) {
   revalidatePath("/app/reports");
   redirect(LEDGER);
 }
+
+// --- Reverse an approved line (audit-safe correction) ------------------------
+// The accounting-correct way to "clear a mistake" that is already posted: never
+// erase it. Post a mirror line (opposite direction, same amounts) dated today so
+// the pair nets to zero, mark the original as reversed, and keep BOTH in the
+// books. Works even when the original sits in a closed period — the reversal
+// lands in the current open period, exactly how prior-period errors are handled.
+type FullLedgerRow = {
+  id: string;
+  document_id: string | null;
+  entry_date: string | null;
+  description: string | null;
+  counterparty: string | null;
+  category: string;
+  direction: "income" | "expense";
+  currency: string | null;
+  amount: number | string;
+  vat_amount: number | string;
+  status: string;
+  reversal_of: string | null;
+  reversed_at: string | null;
+};
+
+export async function reverseLedgerEntry(formData: FormData) {
+  const { supabase, user, company } = await requireCompany();
+
+  const id = String(formData.get("id") ?? "");
+  if (!id) redirect(LEDGER);
+  const redraft = String(formData.get("redraft") ?? "") === "1";
+
+  const { data } = await supabase
+    .from("ledger_entries")
+    .select("*")
+    .eq("id", id)
+    .eq("company_id", company.id)
+    .maybeSingle();
+  const o = data as FullLedgerRow | null;
+  if (!o) redirect(`${LEDGER}?error=Entry+not+found`);
+
+  // Only posted lines need reversing. Drafts/reviewed lines aren't in the books
+  // yet, so editing or deleting them is the right (and reversible) correction.
+  if (o.status !== "approved") {
+    redirect(`${LEDGER}?error=Only+posted+(approved)+lines+are+reversed+—+edit+or+delete+a+draft+instead`);
+  }
+  if (o.reversed_at) redirect(`${LEDGER}?error=This+entry+has+already+been+reversed`);
+  if (o.reversal_of) redirect(`${LEDGER}?error=You+cannot+reverse+a+reversal+entry`);
+
+  const today = new Date().toISOString().slice(0, 10);
+  const opposite = o.direction === "income" ? "expense" : "income";
+
+  // 1) mirror line (opposite direction), approved so it posts immediately
+  const { data: rev, error: insErr } = await supabase
+    .from("ledger_entries")
+    .insert({
+      company_id: company.id,
+      document_id: o.document_id,
+      entry_date: today,
+      description: `Reversal of: ${o.description || o.id}`,
+      counterparty: o.counterparty,
+      category: o.category,
+      direction: opposite,
+      currency: o.currency ?? "AED",
+      amount: Number(o.amount ?? 0),
+      vat_amount: Number(o.vat_amount ?? 0),
+      source: "manual",
+      status: "approved",
+      reversal_of: o.id,
+      reviewed_by: user.id,
+    })
+    .select("id")
+    .single();
+  if (insErr || !rev) {
+    console.error("[books/reverseLedgerEntry] insert:", insErr?.message);
+    redirect(`${LEDGER}?error=Could+not+create+the+reversing+entry`);
+  }
+  const revId = (rev as { id: string }).id;
+
+  // 2) post the reversing journal (opposite of the original → net zero)
+  const res = await syncJournalForEntry(supabase, company.id, revId);
+  if (!res.ok) {
+    // Never leave an "approved" mirror that isn't actually posted — roll it back.
+    await supabase
+      .from("ledger_entries")
+      .delete()
+      .eq("id", revId)
+      .eq("company_id", company.id);
+    redirect(`${LEDGER}?error=Could+not+post+the+reversal+—+please+retry`);
+  }
+
+  // 3) flag the original as reversed (it stays in the books for the trail)
+  await supabase
+    .from("ledger_entries")
+    .update({ reversed_at: new Date().toISOString() })
+    .eq("id", o.id)
+    .eq("company_id", company.id);
+
+  // 4) optional: drop a fresh editable draft so the line can be re-entered right
+  if (redraft) {
+    await supabase.from("ledger_entries").insert({
+      company_id: company.id,
+      document_id: o.document_id,
+      entry_date: o.entry_date,
+      description: o.description ?? "",
+      counterparty: o.counterparty,
+      category: o.category,
+      direction: o.direction,
+      currency: o.currency ?? "AED",
+      amount: Number(o.amount ?? 0),
+      vat_amount: Number(o.vat_amount ?? 0),
+      source: "manual",
+      status: "draft",
+    });
+  }
+
+  revalidatePath(LEDGER);
+  revalidatePath("/app/reports");
+  redirect(
+    `${LEDGER}?ok=Entry+reversed${redraft ? "+—+a+corrected+draft+is+waiting+below" : ""}`,
+  );
+}
