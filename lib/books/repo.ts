@@ -106,10 +106,14 @@ export const getActiveCompany = cache(
 export async function linkMemberships(): Promise<void> {
   const user = await currentUser();
   if (!user) return;
-  const email =
-    user.primaryEmailAddress?.emailAddress ??
-    user.emailAddresses[0]?.emailAddress;
-  if (!email) return;
+  // Only ever match a VERIFIED email. Linking a membership grants access to
+  // another company's books, so an unverified address must never satisfy a
+  // pending invite (that would let someone claim an invite for an address they
+  // don't actually control).
+  const emails = user.emailAddresses
+    .filter((e) => e.verification?.status === "verified")
+    .map((e) => e.emailAddress.toLowerCase());
+  if (emails.length === 0) return;
 
   await db
     .update(companyMembers)
@@ -118,7 +122,7 @@ export async function linkMemberships(): Promise<void> {
       and(
         isNull(companyMembers.userId),
         eq(companyMembers.status, "pending"),
-        eq(sql`lower(${companyMembers.invitedEmail})`, email.toLowerCase()),
+        inArray(sql`lower(${companyMembers.invitedEmail})`, emails),
       ),
     );
 }
