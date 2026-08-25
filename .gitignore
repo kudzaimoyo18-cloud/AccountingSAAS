@@ -13,3 +13,6 @@ next-env.d.ts
 *.tsbuildinfo
 
 .vercel
+
+# Neon agent skills (tool-installed, reinstallable)
+/.agents

@@ -2,22 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { getActiveCompany } from "@/lib/books/repo";
+import { and, eq } from "drizzle-orm";
+import { db } from "@/lib/db/client";
+import { customers } from "@/lib/db/schema";
+import { requireCompany } from "@/lib/scope";
 
 const CUSTOMERS = "/app/customers";
-
-/** Session-scoped company — never trust a form-supplied company_id. */
-async function requireCompany() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-  const company = await getActiveCompany();
-  if (!company) redirect("/app/onboarding");
-  return { supabase, user, company };
-}
 
 function readFields(formData: FormData) {
   return {
@@ -31,19 +21,17 @@ function readFields(formData: FormData) {
 }
 
 export async function createCustomer(formData: FormData) {
-  const { supabase, user, company } = await requireCompany();
+  const { userId, company } = await requireCompany();
 
   const fields = readFields(formData);
   if (!fields.name) redirect(`${CUSTOMERS}?error=Customer+name+is+required`);
 
-  const { error } = await supabase.from("customers").insert({
-    company_id: company.id,
-    created_by: user.id,
-    ...fields,
-  });
-
-  if (error) {
-    console.error("[createCustomer]", error.message);
+  try {
+    await db
+      .insert(customers)
+      .values({ companyId: company.id, createdBy: userId, ...fields });
+  } catch (e) {
+    console.error("[createCustomer]", (e as Error).message);
     redirect(`${CUSTOMERS}?error=Could+not+save+the+customer`);
   }
 
@@ -52,7 +40,7 @@ export async function createCustomer(formData: FormData) {
 }
 
 export async function updateCustomer(formData: FormData) {
-  const { supabase, company } = await requireCompany();
+  const { company } = await requireCompany();
 
   const id = String(formData.get("id") ?? "");
   if (!id) redirect(`${CUSTOMERS}?error=Missing+customer`);
@@ -60,14 +48,13 @@ export async function updateCustomer(formData: FormData) {
   const fields = readFields(formData);
   if (!fields.name) redirect(`${CUSTOMERS}/${id}?error=Customer+name+is+required`);
 
-  const { error } = await supabase
-    .from("customers")
-    .update(fields)
-    .eq("id", id)
-    .eq("company_id", company.id);
-
-  if (error) {
-    console.error("[updateCustomer]", error.message);
+  try {
+    await db
+      .update(customers)
+      .set(fields)
+      .where(and(eq(customers.id, id), eq(customers.companyId, company.id)));
+  } catch (e) {
+    console.error("[updateCustomer]", (e as Error).message);
     redirect(`${CUSTOMERS}/${id}?error=Could+not+save+changes`);
   }
 
@@ -76,20 +63,19 @@ export async function updateCustomer(formData: FormData) {
 }
 
 export async function setCustomerArchived(formData: FormData) {
-  const { supabase, company } = await requireCompany();
+  const { company } = await requireCompany();
 
   const id = String(formData.get("id") ?? "");
   const archived = String(formData.get("archived") ?? "") === "true";
   if (!id) redirect(`${CUSTOMERS}?error=Missing+customer`);
 
-  const { error } = await supabase
-    .from("customers")
-    .update({ archived })
-    .eq("id", id)
-    .eq("company_id", company.id);
-
-  if (error) {
-    console.error("[setCustomerArchived]", error.message);
+  try {
+    await db
+      .update(customers)
+      .set({ archived })
+      .where(and(eq(customers.id, id), eq(customers.companyId, company.id)));
+  } catch (e) {
+    console.error("[setCustomerArchived]", (e as Error).message);
     redirect(`${CUSTOMERS}?error=Could+not+update+the+customer`);
   }
 

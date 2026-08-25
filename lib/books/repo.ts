@@ -1,8 +1,17 @@
-// Server-side data loaders for the books. All respect RLS via the user's session.
+// Server-side data loaders for the books.
+//
+// Post-Supabase: identity comes from Clerk (lib/auth), data from Neon via
+// Drizzle. RLS is gone, so every query scopes by company_id explicitly — and
+// getActiveCompany resolves ONLY companies the caller owns or is an active
+// member of (this is the isolation RLS used to enforce).
 
 import { cache } from "react";
-import { createClient } from "@/lib/supabase/server";
-import { fromRow, type Txn, type TxnRow } from "./types";
+import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { currentUser } from "@clerk/nextjs/server";
+import { db } from "@/lib/db/client";
+import { companies, companyMembers, transactions, vendorRules } from "@/lib/db/schema";
+import { currentUserId } from "@/lib/auth";
+import { type Txn } from "./types";
 import type { VendorRule } from "./categorize";
 import type { Region } from "@/lib/demo/types";
 
@@ -38,66 +47,124 @@ function toCompany(r: CompanyRow): BooksCompany {
   };
 }
 
+function num(v: number | string | null): number {
+  if (v == null) return 0;
+  const n = typeof v === "number" ? v : parseFloat(v);
+  return Number.isFinite(n) ? n : 0;
+}
+
 /**
- * The caller's active company, mapped into books shape. Works for the owner AND
- * for an invited tax agent (RLS can_access_company scopes the row). First links
- * any pending invites for this user's email, so a freshly-signed-up agent gains
- * access on their first books load.
+ * The caller's active company. Resolves a company the Clerk user OWNS, or —
+ * failing that — one they are an ACTIVE member of (an invited tax agent).
+ * Returns null when signed out or with no accessible company.
  */
-// Cached per request: the (portal) layout and the page both call this, so it
-// resolves to one query per navigation. Pending-invite linking used to run here
-// on every load — it now runs once in the layout via linkMemberships().
 export const getActiveCompany = cache(
   async (): Promise<BooksCompany | null> => {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return null;
+    const userId = await currentUserId();
+    if (!userId) return null;
 
-    const { data } = await supabase
-      .from("companies")
-      .select("id, name, region, vat_registered, free_zone, plan, status")
-      .order("created_at", { ascending: true })
-      .limit(1)
-      .maybeSingle();
+    const [owned] = await db
+      .select()
+      .from(companies)
+      .where(eq(companies.ownerId, userId))
+      .orderBy(asc(companies.createdAt))
+      .limit(1);
 
-    if (!data) return null;
-    return toCompany(data as CompanyRow);
+    let row = owned;
+    if (!row) {
+      const memberCompanyIds = db
+        .select({ cid: companyMembers.companyId })
+        .from(companyMembers)
+        .where(
+          and(eq(companyMembers.userId, userId), eq(companyMembers.status, "active")),
+        );
+      const [member] = await db
+        .select()
+        .from(companies)
+        .where(inArray(companies.id, memberCompanyIds))
+        .orderBy(asc(companies.createdAt))
+        .limit(1);
+      row = member;
+    }
+    if (!row) return null;
+
+    return toCompany({
+      id: row.id,
+      name: row.name,
+      region: row.region as Region,
+      vat_registered: row.vatRegistered,
+      free_zone: row.freeZone,
+      plan: row.plan,
+      status: row.status,
+    });
   },
 );
 
 // Link any pending company_member invites for this user (e.g. an invited tax
-// agent's first visit). Called once per request from the (portal) layout.
+// agent's first visit) by matching their Clerk email. Called once per request
+// from the (portal) layout. Replaces the Supabase link_my_memberships() RPC.
 export async function linkMemberships(): Promise<void> {
-  const supabase = await createClient();
-  await supabase.rpc("link_my_memberships");
+  const user = await currentUser();
+  if (!user) return;
+  const email =
+    user.primaryEmailAddress?.emailAddress ??
+    user.emailAddresses[0]?.emailAddress;
+  if (!email) return;
+
+  await db
+    .update(companyMembers)
+    .set({ userId: user.id, status: "active" })
+    .where(
+      and(
+        isNull(companyMembers.userId),
+        eq(companyMembers.status, "pending"),
+        eq(sql`lower(${companyMembers.invitedEmail})`, email.toLowerCase()),
+      ),
+    );
 }
 
 export async function listTransactions(companyId: string): Promise<Txn[]> {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("transactions")
-    .select("*")
-    .eq("company_id", companyId)
-    .order("txn_date", { ascending: false })
-    .order("created_at", { ascending: false });
-  return ((data as TxnRow[]) ?? []).map(fromRow);
+  const rows = await db
+    .select()
+    .from(transactions)
+    .where(eq(transactions.companyId, companyId))
+    .orderBy(desc(transactions.txnDate), desc(transactions.createdAt));
+
+  return rows.map((r) => ({
+    id: r.id,
+    date: r.txnDate,
+    description: r.description,
+    counterparty: r.counterparty,
+    amount: num(r.amount),
+    direction: r.direction as Txn["direction"],
+    accountCode: r.accountCode,
+    category: r.category,
+    vatRate: num(r.vatRate),
+    vatAmount: num(r.vatAmount),
+    net: num(r.netAmount),
+    status: r.status as Txn["status"],
+    confidence: r.confidence == null ? null : num(r.confidence),
+    source: r.source as Txn["source"],
+    reason: r.reason,
+  }));
 }
 
 export async function getVendorRules(companyId: string): Promise<VendorRule[]> {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("vendor_rules")
-    .select("match_text, account_code, category, vat_rate")
-    .eq("company_id", companyId);
-  return (
-    (data as { match_text: string; account_code: string; category: string; vat_rate: number | string }[]) ?? []
-  ).map((r) => ({
-    matchText: r.match_text,
-    accountCode: r.account_code,
+  const rows = await db
+    .select({
+      matchText: vendorRules.matchText,
+      accountCode: vendorRules.accountCode,
+      category: vendorRules.category,
+      vatRate: vendorRules.vatRate,
+    })
+    .from(vendorRules)
+    .where(eq(vendorRules.companyId, companyId));
+
+  return rows.map((r) => ({
+    matchText: r.matchText,
+    accountCode: r.accountCode,
     category: r.category,
-    vatRate: typeof r.vat_rate === "number" ? r.vat_rate : parseFloat(r.vat_rate),
+    vatRate: num(r.vatRate),
   }));
 }
 
