@@ -148,6 +148,23 @@ body {
     @apply w-full rounded-xl border border-line-strong bg-surface px-3.5 py-2.5 text-sm text-ink placeholder:text-ink-soft/60
            shadow-xs transition-colors focus:border-evergreen focus:outline-none focus:ring-2 focus:ring-evergreen/25;
   }
+  /* Chrome and Safari paint their own background on autofilled inputs, which
+     punched a light box straight through the dark theme. background-color is
+     ignored on :-webkit-autofill, so repaint with an inset shadow and force the
+     text colour. Both read the theme variables, so light mode still works. */
+  .field:-webkit-autofill,
+  .field:-webkit-autofill:hover,
+  .field:-webkit-autofill:focus,
+  .field:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px rgb(var(--surface-rgb)) inset;
+    box-shadow: 0 0 0 1000px rgb(var(--surface-rgb)) inset;
+    -webkit-text-fill-color: rgb(var(--ink-rgb));
+    caret-color: rgb(var(--ink-rgb));
+    border-color: rgb(var(--line-strong-rgb));
+    /* Without this Chrome re-applies its own colour a beat after paint. */
+    transition: background-color 9999s ease-in-out 0s;
+  }
+
   /* pill search input (top app bar) */
   .field-search {
     @apply rounded-full bg-paper-dim/70 border-line pl-9;

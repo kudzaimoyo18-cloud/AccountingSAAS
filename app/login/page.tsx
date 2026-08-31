@@ -13,6 +13,9 @@ export default async function LoginPage() {
   const user = await getUser();
   if (user) redirect("/app");
 
+  // Read on the server: the secret must never reach the browser bundle.
+  const googleEnabled = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+
   return (
     <main className="grid min-h-screen place-items-center px-6 py-16">
       <div className="w-full max-w-md">
@@ -28,7 +31,7 @@ export default async function LoginPage() {
           </p>
           <div className="mt-6">
             <Suspense>
-              <LoginForm />
+              <LoginForm googleEnabled={googleEnabled} />
             </Suspense>
           </div>
         </div>

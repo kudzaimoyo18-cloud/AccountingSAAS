@@ -30,6 +30,29 @@ export const auth = betterAuth({
     process.env.BETTER_AUTH_URL ??
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined),
 
+  // Google sign-in is registered only when credentials exist, so a missing key
+  // degrades to email + password rather than a button that 500s. The login page
+  // checks the same env vars to decide whether to render the button at all.
+  socialProviders:
+    process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? {
+          google: {
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          },
+        }
+      : undefined,
+
+  account: {
+    accountLinking: {
+      // Someone who signed up with a password and later uses Google on the same
+      // address gets the same account rather than a duplicate. Google verifies
+      // the address it returns, so this does not weaken the email check.
+      enabled: true,
+      trustedProviders: ["google"],
+    },
+  },
+
   emailAndPassword: {
     enabled: true,
     // No mail provider is wired up yet, so requiring verification would lock
