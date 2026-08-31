@@ -4,7 +4,11 @@ import { BooksTabs } from "@/components/books/BooksTabs";
 import { LedgerTable, type LedgerRow } from "@/components/books/LedgerTable";
 import { MobileMoney, type MobileMoneyRow } from "@/components/app/mobile/MobileMoney";
 import { getActiveCompany } from "@/lib/books/repo";
-import { createClient } from "@/lib/supabase/server";
+import { desc } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { documents } from "@/lib/db/schema";
+import { onlyThisCompany } from "@/lib/db/tenant";
+import { listLedgerEntries } from "@/lib/books/ledger-query";
 import { LEDGER_CATEGORIES } from "@/lib/ai";
 import { extractDocument, addLedgerEntry } from "@/lib/books/ledger-actions";
 
@@ -155,48 +159,28 @@ export default async function BooksLedgerPage({
     filters.q || filters.status || filters.direction || filters.category || periodMonth,
   );
 
-  const supabase = await createClient();
-
-  let entriesQuery = supabase
-    .from("ledger_entries")
-    .select("*")
-    .eq("company_id", company.id)
-    .order("entry_date", { ascending: false, nullsFirst: false })
-    .order("created_at", { ascending: false });
-  if (filters.q) {
-    entriesQuery = entriesQuery.or(
-      `description.ilike.%${filters.q}%,counterparty.ilike.%${filters.q}%`,
-    );
-  }
-  if (filters.status) entriesQuery = entriesQuery.eq("status", filters.status);
-  if (filters.direction) {
-    entriesQuery = entriesQuery.eq("direction", filters.direction);
-  }
-  if (filters.category) {
-    entriesQuery = entriesQuery.eq("category", filters.category);
-  }
-  if (periodMonth) {
-    const now = new Date();
-    const firstOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-    entriesQuery = entriesQuery.gte("entry_date", firstOfMonth);
-  }
-
-  const [{ data: entries }, { data: docs }] = await Promise.all([
-    entriesQuery,
-    supabase
-      .from("documents")
-      .select("id, original_name, kind, created_at")
-      .eq("company_id", company.id)
-      .order("created_at", { ascending: false }),
+  const [entries, docs] = await Promise.all([
+    listLedgerEntries(company.id, { ...filters, periodMonth }),
+    db
+      .select({
+        id: documents.id,
+        original_name: documents.originalName,
+        kind: documents.kind,
+        created_at: documents.createdAt,
+      })
+      .from(documents)
+      .where(onlyThisCompany(documents, company.id))
+      .orderBy(desc(documents.createdAt)),
   ]);
 
-  const rows = (entries ?? []).map((r) => ({
+  // numeric columns arrive as strings from the driver — normalise once here.
+  const rows = entries.map((r) => ({
     ...r,
     amount: Number(r.amount ?? 0),
     vat_amount: Number(r.vat_amount ?? 0),
     confidence: r.confidence == null ? null : Number(r.confidence),
-  })) as LedgerRow[];
-  const docList = (docs ?? []) as DocRow[];
+  })) as unknown as LedgerRow[];
+  const docList = docs as unknown as DocRow[];
 
   const income = rows.filter((r) => r.direction === "income");
   const expense = rows.filter((r) => r.direction === "expense");

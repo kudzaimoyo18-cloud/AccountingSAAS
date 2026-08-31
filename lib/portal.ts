@@ -1,38 +1,44 @@
-// Server-side data loaders for the portal. All respect RLS via the user's session.
-// Wrapped in React cache() so that when the (portal) layout AND the page both ask
-// for the user/profile/company in the same request, it resolves to a single set
-// of queries instead of repeating them on every navigation.
-import { cache } from "react";
-import { createClient } from "@/lib/supabase/server";
+// Server-side data loaders for the portal.
+//
+// These used to hand callers a live Supabase client alongside the user, so a
+// page could run whatever query it liked and rely on RLS to scope it. On Neon
+// there is no RLS, so nothing here hands out a database handle: callers get the
+// resolved identity and company, and go through the scoped helpers for data.
+//
+// Everything is wrapped in React cache() so that when the (portal) layout AND
+// the page both ask for the user/profile/company in the same request, it
+// resolves to a single set of queries instead of repeating them.
 import { redirect } from "next/navigation";
 
-export const requireUser = cache(async () => {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-  return { supabase, user };
-});
+import {
+  getActiveCompany,
+  getProfile as getProfileRow,
+  getUser,
+  requireProfile,
+  requireTenant,
+} from "@/lib/db/tenant";
 
-export const getProfile = cache(async () => {
-  const { supabase, user } = await requireUser();
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id, full_name, role")
-    .eq("id", user.id)
-    .single();
-  return { supabase, user, profile };
-});
+export const requireUser = async () => {
+  const user = await getUser();
+  if (!user) redirect("/handler/sign-in");
+  return { user };
+};
 
-export const getCompany = cache(async () => {
-  const { supabase, user, profile } = await getProfile();
-  const { data: company } = await supabase
-    .from("companies")
-    .select("*")
-    .eq("owner_id", user.id)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-  return { supabase, user, profile, company };
-});
+export const getProfile = async () => {
+  const found = await requireProfile();
+  return { user: found.user, profile: found.profile };
+};
+
+export const getCompany = async () => {
+  const found = await requireProfile();
+  const tenant = await getActiveCompany();
+  return {
+    user: found.user,
+    profile: found.profile,
+    // null when the user has not been through onboarding yet — callers decide
+    // whether that is a redirect or an empty state.
+    company: tenant?.company ?? null,
+  };
+};
+
+export { getActiveCompany, getProfileRow, requireTenant };

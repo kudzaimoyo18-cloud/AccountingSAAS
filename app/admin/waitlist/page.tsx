@@ -1,7 +1,8 @@
-import { redirect } from "next/navigation";
 import { PortalShell } from "@/components/PortalShell";
-import { getProfile } from "@/lib/portal";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { desc } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { waitlist } from "@/lib/db/schema";
+import { requireAdmin } from "@/lib/db/tenant";
 
 export const metadata = { title: "Waitlist — Mizan Admin" };
 
@@ -23,21 +24,23 @@ export default async function AdminWaitlistPage({
 }: {
   searchParams: Promise<{ region?: string }>;
 }) {
-  const { profile } = await getProfile();
-  if (profile?.role !== "admin") redirect("/app");
+  await requireAdmin();
 
   const sp = await searchParams;
   const filter: "all" | Region =
     sp.region === "ae" || sp.region === "gb" ? sp.region : "all";
 
-  // service-role read, gated behind the admin check above
-  const admin = createAdminClient();
-  const { data: allRows } = await admin
-    .from("waitlist")
-    .select("email, company, stage, region, created_at")
-    .order("created_at", { ascending: false });
-
-  const rows = allRows ?? [];
+  // Deliberately unscoped read, gated behind the admin check above.
+  const rows = await db
+    .select({
+      email: waitlist.email,
+      company: waitlist.company,
+      stage: waitlist.stage,
+      region: waitlist.region,
+      created_at: waitlist.createdAt,
+    })
+    .from(waitlist)
+    .orderBy(desc(waitlist.createdAt));
   const counts = {
     all: rows.length,
     ae: rows.filter((r) => asRegion(r.region) === "ae").length,

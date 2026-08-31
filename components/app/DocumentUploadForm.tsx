@@ -2,12 +2,12 @@
 
 import { useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { createClient } from "@/lib/supabase/client";
 import { recordDocument } from "@/lib/actions";
+import { uploadToStorage } from "@/lib/upload-client";
 
-// Documents upload, direct-to-storage: the browser writes the file into the
-// company's private storage folder (storage RLS enforces the prefix), then the
-// server action only records the path — keeps the action request tiny so
+// Documents upload, direct-to-storage: the browser PUTs the file straight to R2
+// with a presigned URL the server mints for this company's own prefix, then the
+// server action only records the key — keeps the action request tiny so
 // Vercel's ~4.5MB function body cap can't 413 a large PDF or photo.
 
 const MAX_BYTES = 15 * 1024 * 1024;
@@ -20,11 +20,9 @@ const KINDS = [
 ];
 
 export function DocumentUploadForm({
-  companyId,
   serverError,
   serverOk,
 }: {
-  companyId: string;
   serverError?: string;
   serverOk?: boolean;
 }) {
@@ -53,22 +51,15 @@ export function DocumentUploadForm({
     }
 
     setUploading(true);
-    const safeName = file.name.replace(/[^\w.\- ]+/g, "_").slice(0, 140);
-    const path = `${companyId}/${Date.now()}-${safeName}`;
+    const result = await uploadToStorage(file, "documents");
 
-    const supabase = createClient();
-    const { error: upErr } = await supabase.storage
-      .from("documents")
-      .upload(path, file, { contentType: file.type || "application/octet-stream" });
-
-    if (upErr) {
-      console.error("[documents] upload:", upErr.message);
-      setError("Upload failed — check your connection and try again.");
+    if ("error" in result) {
+      setError(result.error);
       setUploading(false);
       return;
     }
 
-    if (pathRef.current) pathRef.current.value = path;
+    if (pathRef.current) pathRef.current.value = result.key;
     if (nameRef.current) nameRef.current.value = file.name.slice(0, 200);
     // `uploading` stays true; the action's pending state takes over from here
     // (no setState while pending — that resets useFormStatus on Next 15.5).

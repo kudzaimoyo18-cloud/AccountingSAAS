@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { asc, desc, eq, isNotNull } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { ledgerEntries } from "@/lib/db/schema";
+import { onlyThisCompany } from "@/lib/db/tenant";
 import { getActiveCompany } from "@/lib/books/repo";
 import { approveCapturedLine } from "@/lib/books/capture-actions";
 import { CaptureUpload } from "@/components/app/CaptureUpload";
@@ -42,32 +45,47 @@ export default async function CapturePage({
   if (!company) redirect("/app/onboarding");
 
   const { doc, error, warn } = await searchParams;
-  const supabase = await createClient();
 
-  // Review step: the lines the AI drafted from this photo (RLS scopes to owner).
-  // Plus recent captures for the mobile Scan screen (lines that came from a
-  // photo — document_id set).
-  const [linesRes, recentRes] = await Promise.all([
+  // Review step: the lines the AI drafted from this photo. Plus recent captures
+  // for the mobile Scan screen (lines that came from a photo — document_id set).
+  // Both reads are pinned to the session's company.
+  const [linesRaw, recentRaw] = await Promise.all([
     doc
-      ? supabase
-          .from("ledger_entries")
-          .select(
-            "id, entry_date, description, counterparty, category, direction, currency, amount, vat_amount, confidence, status",
-          )
-          .eq("company_id", company.id)
-          .eq("document_id", doc)
-          .order("created_at", { ascending: true })
-      : Promise.resolve({ data: [] as Line[] }),
-    supabase
-      .from("ledger_entries")
-      .select("id, description, category, direction, amount, currency, entry_date")
-      .eq("company_id", company.id)
-      .not("document_id", "is", null)
-      .order("created_at", { ascending: false })
+      ? db
+          .select({
+            id: ledgerEntries.id,
+            entry_date: ledgerEntries.entryDate,
+            description: ledgerEntries.description,
+            counterparty: ledgerEntries.counterparty,
+            category: ledgerEntries.category,
+            direction: ledgerEntries.direction,
+            currency: ledgerEntries.currency,
+            amount: ledgerEntries.amount,
+            vat_amount: ledgerEntries.vatAmount,
+            confidence: ledgerEntries.confidence,
+            status: ledgerEntries.status,
+          })
+          .from(ledgerEntries)
+          .where(onlyThisCompany(ledgerEntries, company.id, eq(ledgerEntries.documentId, doc)))
+          .orderBy(asc(ledgerEntries.createdAt))
+      : Promise.resolve([]),
+    db
+      .select({
+        id: ledgerEntries.id,
+        description: ledgerEntries.description,
+        category: ledgerEntries.category,
+        direction: ledgerEntries.direction,
+        amount: ledgerEntries.amount,
+        currency: ledgerEntries.currency,
+        entry_date: ledgerEntries.entryDate,
+      })
+      .from(ledgerEntries)
+      .where(onlyThisCompany(ledgerEntries, company.id, isNotNull(ledgerEntries.documentId)))
+      .orderBy(desc(ledgerEntries.createdAt))
       .limit(6),
   ]);
-  const lines = (linesRes.data as Line[]) ?? [];
-  const recentCaptures = (recentRes.data ?? []) as Array<{
+  const lines = linesRaw as unknown as Line[];
+  const recentCaptures = recentRaw as unknown as Array<{
     id: string;
     description: string;
     category: string;
@@ -118,7 +136,7 @@ export default async function CapturePage({
         </div>
       )}
 
-      <MobileScanCapture companyId={company.id} />
+      <MobileScanCapture />
 
       <h2 className="mb-2.5 mt-1 text-[14px] font-extrabold text-ink">Recent captures</h2>
       {recentCaptures.length === 0 ? (
@@ -165,7 +183,7 @@ export default async function CapturePage({
       )}
 
       <div className="mt-6">
-        <CaptureUpload companyId={company.id} />
+        <CaptureUpload />
       </div>
 
       {lines.length > 0 && (

@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { PortalShell } from "@/components/PortalShell";
-import { getProfile } from "@/lib/portal";
+import { desc, eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { accountingPeriods, companies } from "@/lib/db/schema";
+import { requireAdmin } from "@/lib/db/tenant";
+import { postedLines } from "@/lib/books/statements";
 import { taxFromLines } from "@/lib/tax";
 import type { PostedLine, AccountType } from "@/lib/accounting";
 import { closePeriod, reopenPeriod } from "@/lib/tax-actions";
@@ -19,8 +23,7 @@ export default async function TaxPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ from?: string; to?: string; ok?: string; error?: string }>;
 }) {
-  const { supabase, profile } = await getProfile();
-  if (profile?.role !== "admin") redirect("/app");
+  await requireAdmin();
 
   const { id } = await params;
   const sp = await searchParams;
@@ -28,37 +31,28 @@ export default async function TaxPage({
   const from = sp.from || `${year}-01-01`;
   const to = sp.to || `${year}-12-31`;
 
-  const { data: company } = await supabase
-    .from("companies").select("*").eq("id", id).maybeSingle();
+  const [company] = await db.select().from(companies).where(eq(companies.id, id)).limit(1);
   if (!company) notFound();
 
-  const [{ data: raw }, { data: periods }] = await Promise.all([
-    supabase
-      .from("journal_lines")
-      .select("debit, credit, accounts(code,name,type), journal_entries!inner(company_id,entry_date)")
-      .eq("journal_entries.company_id", id)
-      .gte("journal_entries.entry_date", from)
-      .lte("journal_entries.entry_date", to),
-    supabase
-      .from("accounting_periods")
-      .select("*")
-      .eq("company_id", id)
-      .order("end_date", { ascending: false }),
+  const [lines, periods] = await Promise.all([
+    postedLines(id, { from, to }),
+    db
+      .select({
+        id: accountingPeriods.id,
+        label: accountingPeriods.label,
+        start_date: accountingPeriods.startDate,
+        end_date: accountingPeriods.endDate,
+        status: accountingPeriods.status,
+        vat_output: accountingPeriods.vatOutput,
+        vat_input: accountingPeriods.vatInput,
+        vat_net: accountingPeriods.vatNet,
+        taxable_profit: accountingPeriods.taxableProfit,
+        corporate_tax: accountingPeriods.corporateTax,
+      })
+      .from(accountingPeriods)
+      .where(eq(accountingPeriods.companyId, id))
+      .orderBy(desc(accountingPeriods.endDate)),
   ]);
-
-  const lines: PostedLine[] = (raw ?? [])
-    .map((r) => {
-      const acc = Array.isArray(r.accounts) ? r.accounts[0] : r.accounts;
-      if (!acc) return null;
-      return {
-        code: acc.code as string,
-        name: acc.name as string,
-        type: acc.type as AccountType,
-        debit: Number(r.debit),
-        credit: Number(r.credit),
-      };
-    })
-    .filter((x): x is PostedLine => x !== null);
 
   const { vat, ct, netProfit } = taxFromLines(lines);
   const hasData = lines.length > 0;

@@ -2,7 +2,10 @@ import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { PortalShell } from "@/components/PortalShell";
 import { StatusBadge } from "@/components/StatusBadge";
-import { getProfile } from "@/lib/portal";
+import { desc, eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { bankTransactions, companies, journalEntries, journalLines } from "@/lib/db/schema";
+import { requireAdmin } from "@/lib/db/tenant";
 import {
   importBankCsv,
   autoReconcile,
@@ -23,45 +26,58 @@ export default async function BankPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ ok?: string; error?: string }>;
 }) {
-  const { supabase, profile } = await getProfile();
-  if (profile?.role !== "admin") redirect("/app");
+  await requireAdmin();
 
   const { id } = await params;
   const { ok, error } = await searchParams;
 
-  const { data: company } = await supabase
-    .from("companies").select("*").eq("id", id).maybeSingle();
+  const [company] = await db.select().from(companies).where(eq(companies.id, id)).limit(1);
   if (!company) notFound();
 
-  const [{ data: txns }, { data: entries }, { data: lines }] = await Promise.all([
-    supabase
-      .from("bank_transactions")
-      .select("*")
-      .eq("company_id", id)
-      .order("txn_date", { ascending: false }),
-    supabase
-      .from("journal_entries")
-      .select("id, entry_date, memo")
-      .eq("company_id", id)
-      .order("entry_date", { ascending: false }),
-    supabase
-      .from("journal_lines")
-      .select("entry_id, debit, journal_entries!inner(company_id)")
-      .eq("journal_entries.company_id", id),
+  const [txns, entries, lines] = await Promise.all([
+    db
+      .select({
+        id: bankTransactions.id,
+        txn_date: bankTransactions.txnDate,
+        description: bankTransactions.description,
+        amount: bankTransactions.amount,
+        currency: bankTransactions.currency,
+        matched_entry_id: bankTransactions.matchedEntryId,
+        status: bankTransactions.status,
+      })
+      .from(bankTransactions)
+      .where(eq(bankTransactions.companyId, id))
+      .orderBy(desc(bankTransactions.txnDate)),
+    db
+      .select({
+        id: journalEntries.id,
+        entry_date: journalEntries.entryDate,
+        memo: journalEntries.memo,
+      })
+      .from(journalEntries)
+      .where(eq(journalEntries.companyId, id))
+      .orderBy(desc(journalEntries.entryDate)),
+    // journal_lines has no company_id — the join to its parent entry is what
+    // scopes it.
+    db
+      .select({ entry_id: journalLines.entryId, debit: journalLines.debit })
+      .from(journalLines)
+      .innerJoin(journalEntries, eq(journalEntries.id, journalLines.entryId))
+      .where(eq(journalEntries.companyId, id)),
   ]);
 
   const gross = new Map<string, number>();
-  for (const l of lines ?? []) gross.set(l.entry_id, (gross.get(l.entry_id) ?? 0) + Number(l.debit));
+  for (const l of lines) gross.set(l.entry_id, (gross.get(l.entry_id) ?? 0) + Number(l.debit));
 
-  const matchedIds = new Set((txns ?? []).map((t) => t.matched_entry_id).filter(Boolean));
-  const candidates = (entries ?? [])
+  const matchedIds = new Set(txns.map((t) => t.matched_entry_id).filter(Boolean));
+  const candidates = entries
     .filter((e) => !matchedIds.has(e.id))
     .map((e) => ({
       id: e.id,
       label: `${e.entry_date ?? "—"} · ${e.memo || "entry"} · AED ${money(gross.get(e.id) ?? 0)}`,
     }));
 
-  const rows = txns ?? [];
+  const rows = txns;
   const unmatched = rows.filter((t) => t.status === "unmatched").length;
   const matched = rows.filter((t) => t.status === "matched").length;
 

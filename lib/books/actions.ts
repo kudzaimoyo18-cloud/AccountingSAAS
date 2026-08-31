@@ -2,8 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { getActiveCompany, getVendorRules } from "./repo";
+import { and, eq } from "drizzle-orm";
+
+import { db } from "@/lib/db";
+import { statementImports, transactions, vendorRules } from "@/lib/db/schema";
+import { onlyThisCompany, requireWritableTenant } from "@/lib/db/tenant";
+import { buildKey, isStorageConfigured, putObject } from "@/lib/storage";
+import { getVendorRules } from "./repo";
 import { categorizeLines } from "./categorize";
 import { splitVat, REVIEW_THRESHOLD, normalizeMatch } from "./rules";
 import { parseCsv, toLines, type ColumnMap } from "./csv";
@@ -19,7 +24,12 @@ function vatRateFor(vatRegistered: boolean, region: "ae" | "gb"): number {
   return vatRegistered ? REGIONS[region].vatRate : 0;
 }
 
-/** Build the DB row payload for one categorised line. */
+/**
+ * Build the row payload for one categorised line.
+ *
+ * Drizzle wants numeric columns as strings so the exact decimal survives the
+ * round trip — JS floats would quietly re-round money on the way in.
+ */
 function toTxnRow(
   companyId: string,
   userId: string,
@@ -30,38 +40,31 @@ function toTxnRow(
   const { net, vat } = splitVat(line.amount, suggestion.vatRate);
   const posted = suggestion.confidence >= REVIEW_THRESHOLD;
   return {
-    company_id: companyId,
-    import_id: importId,
-    txn_date: line.date,
+    companyId,
+    importId,
+    txnDate: line.date,
     description: line.description.slice(0, 300),
     counterparty: line.counterparty?.slice(0, 200) || null,
-    amount: line.amount,
+    amount: String(line.amount),
     direction: line.direction,
-    account_code: suggestion.accountCode,
+    accountCode: suggestion.accountCode,
     category: suggestion.category,
-    vat_rate: suggestion.vatRate,
-    vat_amount: vat,
-    net_amount: net,
+    vatRate: String(suggestion.vatRate),
+    vatAmount: String(vat),
+    netAmount: String(net),
     status: posted ? "posted" : "review",
-    confidence: suggestion.confidence,
+    confidence: String(suggestion.confidence),
     source: importId ? (suggestion.source === "ai" ? "ai" : "import") : suggestion.source,
     reason: suggestion.reason,
-    created_by: userId,
-    posted_at: posted ? new Date().toISOString() : null,
+    createdBy: userId,
+    postedAt: posted ? new Date() : null,
   };
 }
 
-// ─────────────────────────── Manual entry ───────────────────────────
+// --------------------------- Manual entry ---------------------------
 
 export async function addTransaction(formData: FormData) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const company = await getActiveCompany();
-  if (!company) redirect("/app/onboarding");
+  const { company, user } = await requireWritableTenant();
 
   const date = String(formData.get("date") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
@@ -77,21 +80,19 @@ export async function addTransaction(formData: FormData) {
   }
 
   const line: RawLine = { date, description, counterparty, amount, direction };
-  const vendorRules = await getVendorRules(company.id);
+  const rules = await getVendorRules(company.id);
   const [categorized] = await categorizeLines(
     [line],
-    company.region,
-    vatRateFor(company.vatRegistered, company.region),
-    vendorRules,
+    company.region as "ae" | "gb",
+    vatRateFor(company.vatRegistered, company.region as "ae" | "gb"),
+    rules,
     Boolean(process.env.ANTHROPIC_API_KEY),
   );
 
-  const { error } = await supabase
-    .from("transactions")
-    .insert(toTxnRow(company.id, user.id, categorized, null));
-
-  if (error) {
-    console.error("[addTransaction]", error.message);
+  try {
+    await db.insert(transactions).values(toTxnRow(company.id, user.id, categorized, null));
+  } catch (err) {
+    console.error("[addTransaction]", err instanceof Error ? err.message : err);
     redirect(`${BOOKS}?error=Could+not+save+the+transaction`);
   }
 
@@ -99,17 +100,10 @@ export async function addTransaction(formData: FormData) {
   redirect(`${BOOKS}?ok=Added`);
 }
 
-// ─────────────────────────── CSV import ───────────────────────────
+// --------------------------- CSV import ---------------------------
 
 export async function importStatement(formData: FormData) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const company = await getActiveCompany();
-  if (!company) redirect("/app/onboarding");
+  const { company, user } = await requireWritableTenant();
 
   const file = formData.get("file") as File | null;
   const mappingRaw = String(formData.get("mapping") ?? "");
@@ -130,49 +124,62 @@ export async function importStatement(formData: FormData) {
     redirect(`${BOOKS}/import?error=No+rows+found+-+check+the+column+mapping`);
   }
 
-  // Store the raw CSV for audit (best-effort; failure doesn't block import).
-  const safeName = file.name.replace(/[^\w.\- ]+/g, "_").slice(0, 120);
-  const sourcePath = `${company.id}/statements/${Date.now()}-${safeName}`;
-  await supabase.storage.from("documents").upload(sourcePath, file, {
-    contentType: file.type || "text/csv",
-  });
+  // Keep the raw CSV for audit. Best-effort: a storage hiccup must not cost the
+  // user an import they already waited for.
+  const sourceKey = buildKey(company.id, "statements", file.name);
+  let storedPath: string | null = null;
+  if (isStorageConfigured()) {
+    try {
+      await putObject(
+        sourceKey,
+        company.id,
+        Buffer.from(text, "utf8"),
+        file.type || "text/csv",
+      );
+      storedPath = sourceKey;
+    } catch (err) {
+      console.error("[importStatement] archive:", err instanceof Error ? err.message : err);
+    }
+  }
 
-  const vendorRules = await getVendorRules(company.id);
+  const rules = await getVendorRules(company.id);
   const categorized = await categorizeLines(
     lines,
-    company.region,
-    vatRateFor(company.vatRegistered, company.region),
-    vendorRules,
+    company.region as "ae" | "gb",
+    vatRateFor(company.vatRegistered, company.region as "ae" | "gb"),
+    rules,
     Boolean(process.env.ANTHROPIC_API_KEY),
   );
 
   const postedCount = categorized.filter((c) => c.suggestion.confidence >= REVIEW_THRESHOLD).length;
   const reviewCount = categorized.length - postedCount;
 
-  const { data: imp, error: impErr } = await supabase
-    .from("statement_imports")
-    .insert({
-      company_id: company.id,
-      uploaded_by: user.id,
-      source_name: file.name.slice(0, 200),
-      source_path: sourcePath,
-      period_label: periodLabel(lines),
-      row_count: categorized.length,
-      posted_count: postedCount,
-      review_count: reviewCount,
-    })
-    .select("id")
-    .single();
+  try {
+    // One transaction: an import batch that records 400 rows but saves none is
+    // worse than no import at all.
+    await db.transaction(async (tx) => {
+      const [imp] = await tx
+        .insert(statementImports)
+        .values({
+          companyId: company.id,
+          uploadedBy: user.id,
+          sourceName: file.name.slice(0, 200),
+          sourcePath: storedPath,
+          periodLabel: periodLabel(lines),
+          rowCount: categorized.length,
+          postedCount,
+          reviewCount,
+        })
+        .returning({ id: statementImports.id });
 
-  if (impErr || !imp) {
-    console.error("[importStatement] batch:", impErr?.message);
-    redirect(`${BOOKS}/import?error=Could+not+record+the+import`);
-  }
+      if (!imp) throw new Error("Could not record the import batch.");
 
-  const payload = categorized.map((line) => toTxnRow(company.id, user.id, line, imp.id));
-  const { error: txnErr } = await supabase.from("transactions").insert(payload);
-  if (txnErr) {
-    console.error("[importStatement] txns:", txnErr.message);
+      await tx
+        .insert(transactions)
+        .values(categorized.map((line) => toTxnRow(company.id, user.id, line, imp.id)));
+    });
+  } catch (err) {
+    console.error("[importStatement]", err instanceof Error ? err.message : err);
     redirect(`${BOOKS}/import?error=Could+not+save+transactions`);
   }
 
@@ -180,89 +187,104 @@ export async function importStatement(formData: FormData) {
   redirect(`${BOOKS}?imported=${categorized.length}&auto=${postedCount}&review=${reviewCount}`);
 }
 
-// ─────────────────────────── Review actions ───────────────────────────
+// --------------------------- Review actions ---------------------------
 
 export async function approveTransaction(formData: FormData) {
-  const supabase = await createClient();
+  const { company } = await requireWritableTenant();
   const id = String(formData.get("id") ?? "");
   if (!id) redirect(`${BOOKS}/review?error=Missing+transaction`);
 
-  const { error } = await supabase
-    .from("transactions")
-    .update({ status: "posted", posted_at: new Date().toISOString() })
-    .eq("id", id);
+  // The company filter is load-bearing. Supabase RLS used to add it invisibly;
+  // without it, any signed-in user could post another tenant's transaction just
+  // by submitting its id.
+  const updated = await db
+    .update(transactions)
+    .set({ status: "posted", postedAt: new Date() })
+    .where(onlyThisCompany(transactions, company.id, eq(transactions.id, id)))
+    .returning({ id: transactions.id });
 
-  if (error) {
-    console.error("[approveTransaction]", error.message);
+  if (updated.length === 0) {
     redirect(`${BOOKS}/review?error=Could+not+approve`);
   }
+
   revalidatePath(BOOKS, "layout");
   redirect(`${BOOKS}/review`);
 }
 
 export async function reassignTransaction(formData: FormData) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const company = await getActiveCompany();
-  if (!company) redirect("/app/onboarding");
+  const { company, user } = await requireWritableTenant();
 
   const id = String(formData.get("id") ?? "");
   const accountCode = String(formData.get("account_code") ?? "");
   if (!id || !accountCode) redirect(`${BOOKS}/review?error=Pick+an+account`);
 
-  const account = accountByCode(company.region, accountCode);
+  const account = accountByCode(company.region as "ae" | "gb", accountCode);
   if (!account) redirect(`${BOOKS}/review?error=Unknown+account`);
 
   // Load the transaction to recompute VAT against its gross amount.
-  const { data: txn } = await supabase
-    .from("transactions")
-    .select("amount, vat_rate, description, counterparty, direction")
-    .eq("id", id)
-    .single();
+  const [txn] = await db
+    .select({
+      amount: transactions.amount,
+      vatRate: transactions.vatRate,
+      description: transactions.description,
+      counterparty: transactions.counterparty,
+      direction: transactions.direction,
+    })
+    .from(transactions)
+    .where(onlyThisCompany(transactions, company.id, eq(transactions.id, id)))
+    .limit(1);
+
   if (!txn) redirect(`${BOOKS}/review?error=Transaction+not+found`);
 
-  const gross = typeof txn.amount === "number" ? txn.amount : parseFloat(txn.amount);
-  const vatRate = typeof txn.vat_rate === "number" ? txn.vat_rate : parseFloat(txn.vat_rate);
+  const gross = Number(txn.amount);
+  const vatRate = Number(txn.vatRate);
   const { net, vat } = splitVat(gross, vatRate);
 
-  const { error } = await supabase
-    .from("transactions")
-    .update({
-      account_code: account.code,
-      category: account.name,
-      net_amount: net,
-      vat_amount: vat,
-      status: "posted",
-      source: "manual",
-      posted_at: new Date().toISOString(),
-      reason: "approved by you",
-    })
-    .eq("id", id);
+  try {
+    await db.transaction(async (tx) => {
+      await tx
+        .update(transactions)
+        .set({
+          accountCode: account.code,
+          category: account.name,
+          netAmount: String(net),
+          vatAmount: String(vat),
+          status: "posted",
+          source: "manual",
+          postedAt: new Date(),
+          reason: "approved by you",
+        })
+        .where(onlyThisCompany(transactions, company.id, eq(transactions.id, id)));
 
-  if (error) {
-    console.error("[reassignTransaction]", error.message);
+      // Learn: remember this vendor -> account so the same payee auto-posts
+      // next time. Part of the same transaction as the correction it came from.
+      const matchText = normalizeMatch(`${txn.description ?? ""} ${txn.counterparty ?? ""}`);
+      if (matchText.length >= 3) {
+        await tx
+          .insert(vendorRules)
+          .values({
+            companyId: company.id,
+            matchText,
+            accountCode: account.code,
+            category: account.name,
+            vatRate: String(vatRate),
+            direction: txn.direction,
+            createdBy: user.id,
+          })
+          .onConflictDoUpdate({
+            target: [vendorRules.companyId, vendorRules.matchText],
+            set: {
+              accountCode: account.code,
+              category: account.name,
+              vatRate: String(vatRate),
+              direction: txn.direction,
+            },
+          });
+      }
+    });
+  } catch (err) {
+    console.error("[reassignTransaction]", err instanceof Error ? err.message : err);
     redirect(`${BOOKS}/review?error=Could+not+re-assign`);
-  }
-
-  // Learn: remember this vendor → account so the same payee auto-posts next time.
-  const matchText = normalizeMatch(`${txn.description ?? ""} ${txn.counterparty ?? ""}`);
-  if (matchText.length >= 3) {
-    await supabase.from("vendor_rules").upsert(
-      {
-        company_id: company.id,
-        match_text: matchText,
-        account_code: account.code,
-        category: account.name,
-        vat_rate: vatRate,
-        direction: txn.direction,
-        created_by: user.id,
-      },
-      { onConflict: "company_id,match_text" },
-    );
   }
 
   revalidatePath(BOOKS, "layout");
@@ -270,15 +292,19 @@ export async function reassignTransaction(formData: FormData) {
 }
 
 export async function deleteTransaction(formData: FormData) {
-  const supabase = await createClient();
+  const { company } = await requireWritableTenant();
   const id = String(formData.get("id") ?? "");
   if (!id) redirect(`${BOOKS}?error=Missing+transaction`);
 
-  const { error } = await supabase.from("transactions").delete().eq("id", id);
-  if (error) {
-    console.error("[deleteTransaction]", error.message);
+  const deleted = await db
+    .delete(transactions)
+    .where(onlyThisCompany(transactions, company.id, eq(transactions.id, id)))
+    .returning({ id: transactions.id });
+
+  if (deleted.length === 0) {
     redirect(`${BOOKS}?error=Could+not+delete`);
   }
+
   revalidatePath(BOOKS, "layout");
   redirect(`${BOOKS}?ok=Deleted`);
 }
@@ -287,6 +313,5 @@ function periodLabel(lines: RawLine[]): string {
   if (lines.length === 0) return "";
   const dates = lines.map((l) => l.date).sort();
   const first = new Date(dates[0]);
-  const month = first.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
-  return month;
+  return first.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
 }

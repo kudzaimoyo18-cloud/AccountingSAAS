@@ -1,5 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { asc } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { customers as customersTable, invoices } from "@/lib/db/schema";
+import { onlyThisCompany } from "@/lib/db/tenant";
 import { getCompany } from "@/lib/portal";
 import { createCustomer } from "@/lib/customers/actions";
 import { moneyExact } from "@/lib/demo/format";
@@ -26,27 +30,37 @@ export default async function CustomersPage({
 }: {
   searchParams: Promise<{ error?: string; ok?: string }>;
 }) {
-  const { supabase, company } = await getCompany();
+  const { company } = await getCompany();
   if (!company) redirect("/app/onboarding");
   const { error, ok } = await searchParams;
   const region = company.region as Region;
 
-  const [{ data: customerData }, { data: invoiceData }] = await Promise.all([
-    supabase
-      .from("customers")
-      .select("id, name, email, phone, archived")
-      .eq("company_id", company.id)
-      .order("name", { ascending: true }),
-    supabase
-      .from("invoices")
-      .select("customer_id, status, total")
-      .eq("company_id", company.id),
+  const [customerData, invoiceData] = await Promise.all([
+    db
+      .select({
+        id: customersTable.id,
+        name: customersTable.name,
+        email: customersTable.email,
+        phone: customersTable.phone,
+        archived: customersTable.archived,
+      })
+      .from(customersTable)
+      .where(onlyThisCompany(customersTable, company.id))
+      .orderBy(asc(customersTable.name)),
+    db
+      .select({
+        customer_id: invoices.customerId,
+        status: invoices.status,
+        total: invoices.total,
+      })
+      .from(invoices)
+      .where(onlyThisCompany(invoices, company.id)),
   ]);
 
-  const customers = (customerData ?? []) as CustomerRow[];
+  const customers = customerData as CustomerRow[];
   const invoiced = new Map<string, number>();
   const outstanding = new Map<string, number>();
-  for (const inv of (invoiceData ?? []) as InvoiceAgg[]) {
+  for (const inv of invoiceData as InvoiceAgg[]) {
     const total = typeof inv.total === "number" ? inv.total : parseFloat(inv.total);
     if (!Number.isFinite(total)) continue;
     if (inv.status === "sent" || inv.status === "paid") {

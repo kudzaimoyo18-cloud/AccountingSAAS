@@ -1,50 +1,59 @@
 import "server-only";
-import { createClient } from "@/lib/supabase/server";
+
+import { and, eq, inArray } from "drizzle-orm";
+
+import { db } from "@/lib/db";
+import {
+  accounts as accountsTable,
+  journalEntries,
+  journalLines,
+  ledgerEntries,
+} from "@/lib/db/schema";
 import { DEFAULT_CHART, postingLinesFor } from "@/lib/accounting";
 
-// The RLS-bound Supabase client (owner's session). Same shape createClient returns.
-type Db = Awaited<ReturnType<typeof createClient>>;
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+type Runner = typeof db | Tx;
 
-// Insert the default chart of accounts for a company if it has none yet.
-// Returns a code -> account-id map. Owner-writable since migration 0008.
-async function ensureChart(supabase: Db, companyId: string): Promise<Map<string, string>> {
-  const { data: existing } = await supabase
-    .from("accounts")
-    .select("id, code")
-    .eq("company_id", companyId);
+/**
+ * Insert the default chart of accounts for a company if it has none yet.
+ * Returns a code -> account-id map.
+ */
+async function ensureChart(runner: Runner, companyId: string): Promise<Map<string, string>> {
+  const existing = await runner
+    .select({ id: accountsTable.id, code: accountsTable.code })
+    .from(accountsTable)
+    .where(eq(accountsTable.companyId, companyId));
 
-  if (!existing || existing.length === 0) {
-    await supabase.from("accounts").insert(
+  if (existing.length > 0) {
+    return new Map(existing.map((a) => [a.code, a.id]));
+  }
+
+  const seeded = await runner
+    .insert(accountsTable)
+    .values(
       DEFAULT_CHART.map((a) => ({
-        company_id: companyId,
+        companyId,
         code: a.code,
         name: a.name,
         type: a.type,
-        vat_treatment: a.vat_treatment,
+        vatTreatment: a.vat_treatment,
       })),
-    );
+    )
+    // Another request may be seeding the same chart concurrently; take whichever
+    // rows land and read the full set back below.
+    .onConflictDoNothing()
+    .returning({ id: accountsTable.id, code: accountsTable.code });
+
+  if (seeded.length === DEFAULT_CHART.length) {
+    return new Map(seeded.map((a) => [a.code, a.id]));
   }
 
-  const { data: accounts } = await supabase
-    .from("accounts")
-    .select("id, code")
-    .eq("company_id", companyId);
-
-  return new Map(
-    ((accounts ?? []) as { id: string; code: string }[]).map((a) => [a.code, a.id]),
-  );
+  const all = await runner
+    .select({ id: accountsTable.id, code: accountsTable.code })
+    .from(accountsTable)
+    .where(eq(accountsTable.companyId, companyId));
+  return new Map(all.map((a) => [a.code, a.id]));
 }
-
-type LedgerEntryRow = {
-  id: string;
-  entry_date: string | null;
-  description: string | null;
-  direction: "income" | "expense";
-  category: string;
-  amount: number | string;
-  vat_amount: number | string;
-  status: string;
-};
 
 /**
  * Make the posted double-entry journals for ONE ledger entry match its current
@@ -55,92 +64,148 @@ type LedgerEntryRow = {
  *
  * Returns { ok } so the caller can react to a posting failure (e.g. revert an
  * approval and tell the user) instead of the line silently staying unposted —
- * the previous best-effort version could show a line "Approved" while it never
- * reached Reports.
+ * a line must never show "Approved" while it never reached Reports.
+ *
+ * Everything runs inside one database transaction. Under Supabase this was a
+ * sequence of separate REST calls with a hand-rolled compensating delete when
+ * the lines failed; on Neon the header and its lines commit together or not at
+ * all, so an unbalanced or headerless journal cannot exist even if the process
+ * dies mid-write.
  */
 export type SyncResult = { ok: boolean; error?: string };
 
 export async function syncJournalForEntry(
-  supabase: Db,
   companyId: string,
   ledgerEntryId: string,
 ): Promise<SyncResult> {
   try {
-    // Clear any prior journal for this ledger line first.
-    const { error: delErr } = await supabase
-      .from("journal_entries")
-      .delete()
-      .eq("company_id", companyId)
-      .eq("ledger_entry_id", ledgerEntryId);
-    if (delErr) {
-      console.error("[syncJournal] clear:", delErr.message);
-      return { ok: false, error: delErr.message };
-    }
+    return await db.transaction(async (tx) => {
+      // Clear any prior journal for this ledger line first.
+      await tx
+        .delete(journalEntries)
+        .where(
+          and(
+            eq(journalEntries.companyId, companyId),
+            eq(journalEntries.ledgerEntryId, ledgerEntryId),
+          ),
+        );
 
-    const { data } = await supabase
-      .from("ledger_entries")
-      .select("id, entry_date, description, direction, category, amount, vat_amount, status")
-      .eq("id", ledgerEntryId)
-      .eq("company_id", companyId)
-      .maybeSingle();
+      const [e] = await tx
+        .select({
+          id: ledgerEntries.id,
+          entryDate: ledgerEntries.entryDate,
+          description: ledgerEntries.description,
+          direction: ledgerEntries.direction,
+          category: ledgerEntries.category,
+          amount: ledgerEntries.amount,
+          vatAmount: ledgerEntries.vatAmount,
+          status: ledgerEntries.status,
+        })
+        .from(ledgerEntries)
+        .where(
+          and(eq(ledgerEntries.id, ledgerEntryId), eq(ledgerEntries.companyId, companyId)),
+        )
+        .limit(1);
 
-    const e = data as LedgerEntryRow | null;
-    // Not approved → nothing should be posted; the clear above is the whole job.
-    if (!e || e.status !== "approved") return { ok: true };
+      // Not approved -> nothing should be posted; the clear above is the whole job.
+      if (!e || e.status !== "approved") return { ok: true };
 
-    const codeToId = await ensureChart(supabase, companyId);
-    const lines = postingLinesFor({
-      direction: e.direction,
-      category: e.category,
-      amount: Number(e.amount),
-      vat_amount: Number(e.vat_amount),
-    });
-    const resolved = lines.map((l) => ({
-      account_id: codeToId.get(l.code),
-      debit: l.debit,
-      credit: l.credit,
-    }));
-    if (resolved.some((l) => !l.account_id)) {
-      console.error("[syncJournal] missing account for ledger entry", e.id);
-      return { ok: false, error: "Chart of accounts is missing an account for this line." };
-    }
+      const codeToId = await ensureChart(tx, companyId);
+      const lines = postingLinesFor({
+        direction: e.direction as "income" | "expense",
+        category: e.category,
+        amount: Number(e.amount),
+        vat_amount: Number(e.vatAmount),
+      });
 
-    const { data: header, error: hErr } = await supabase
-      .from("journal_entries")
-      .insert({
-        company_id: companyId,
-        ledger_entry_id: e.id,
-        entry_date: e.entry_date ?? new Date().toISOString().slice(0, 10),
-        memo: e.description ?? "",
-        source: "ledger",
-      })
-      .select("id")
-      .single();
-    if (hErr || !header) {
-      console.error("[syncJournal] header:", hErr?.message);
-      return { ok: false, error: hErr?.message ?? "Could not create journal entry." };
-    }
-
-    // All lines in one insert so the deferred balance trigger sees a complete,
-    // balanced entry at commit.
-    const { error: lErr } = await supabase.from("journal_lines").insert(
-      resolved.map((l) => ({
-        entry_id: (header as { id: string }).id,
-        account_id: l.account_id as string,
+      const resolved = lines.map((l) => ({
+        accountId: codeToId.get(l.code),
         debit: l.debit,
         credit: l.credit,
-      })),
-    );
-    if (lErr) {
-      console.error("[syncJournal] lines:", lErr.message);
-      // Roll back the orphan header so a retry can re-post cleanly.
-      await supabase.from("journal_entries").delete().eq("id", (header as { id: string }).id);
-      return { ok: false, error: lErr.message };
-    }
-    return { ok: true };
+      }));
+
+      if (resolved.some((l) => !l.accountId)) {
+        console.error("[syncJournal] missing account for ledger entry", e.id);
+        // Throwing rolls the transaction back, including the clear above, so a
+        // previously-good journal is not destroyed by a failed re-post.
+        throw new PostingError("Chart of accounts is missing an account for this line.");
+      }
+
+      const [header] = await tx
+        .insert(journalEntries)
+        .values({
+          companyId,
+          ledgerEntryId: e.id,
+          entryDate: e.entryDate ?? new Date().toISOString().slice(0, 10),
+          memo: e.description ?? "",
+          source: "ledger",
+        })
+        .returning({ id: journalEntries.id });
+
+      if (!header) throw new PostingError("Could not create journal entry.");
+
+      await tx.insert(journalLines).values(
+        resolved.map((l) => ({
+          entryId: header.id,
+          accountId: l.accountId as string,
+          debit: String(l.debit),
+          credit: String(l.credit),
+        })),
+      );
+
+      // Belt and braces on top of the database's deferred balance trigger: if
+      // postingLinesFor ever returns a lopsided set, fail here rather than
+      // commit books that do not add up.
+      const totalDebit = resolved.reduce((s, l) => s + l.debit, 0);
+      const totalCredit = resolved.reduce((s, l) => s + l.credit, 0);
+      if (Math.abs(totalDebit - totalCredit) > 0.005) {
+        throw new PostingError(
+          `Journal for ${e.id} is unbalanced: debit ${totalDebit} vs credit ${totalCredit}.`,
+        );
+      }
+
+      return { ok: true };
+    });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[syncJournal]", msg);
     return { ok: false, error: msg };
   }
 }
+
+export class PostingError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "PostingError";
+  }
+}
+
+/** Re-post a batch of ledger entries (used after a bulk approve). */
+export async function syncJournalsForEntries(
+  companyId: string,
+  ledgerEntryIds: string[],
+): Promise<SyncResult> {
+  for (const id of ledgerEntryIds) {
+    const res = await syncJournalForEntry(companyId, id);
+    if (!res.ok) return res;
+  }
+  return { ok: true };
+}
+
+/** Drop the journals for ledger entries that are about to be deleted. */
+export async function clearJournalsForEntries(
+  companyId: string,
+  ledgerEntryIds: string[],
+): Promise<void> {
+  if (ledgerEntryIds.length === 0) return;
+  await db
+    .delete(journalEntries)
+    .where(
+      and(
+        eq(journalEntries.companyId, companyId),
+        inArray(journalEntries.ledgerEntryId, ledgerEntryIds),
+      ),
+    );
+}
+
+export { ensureChart };

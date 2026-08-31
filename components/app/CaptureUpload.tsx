@@ -2,20 +2,20 @@
 
 import { useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { createClient } from "@/lib/supabase/client";
 import { captureReceipt } from "@/lib/books/capture-actions";
+import { uploadToStorage } from "@/lib/upload-client";
 
 // Camera-first capture: the button opens the phone's own camera (rear lens) via
-// the `capture` attribute. The photo is uploaded to Supabase Storage straight
-// from the browser (storage RLS scopes writes to the caller's company folder),
-// and only the storage PATH is submitted to the server action — the action
+// the `capture` attribute. The photo is PUT straight from the browser to R2
+// using a presigned URL scoped to the caller's own company prefix, and only the
+// storage KEY is submitted to the server action — the action
 // request stays a few hundred bytes, so Vercel's ~4.5MB function body cap can
 // never 413 a large photo again. On desktop the same control falls back to a
 // normal file picker.
 
 const MAX_BYTES = 15 * 1024 * 1024;
 
-export function CaptureUpload({ companyId }: { companyId: string }) {
+export function CaptureUpload() {
   const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const pathRef = useRef<HTMLInputElement>(null);
@@ -36,21 +36,16 @@ export function CaptureUpload({ companyId }: { companyId: string }) {
     const mediaType = file.type || "application/octet-stream";
     const ext =
       mediaType === "image/png" ? "png" : mediaType === "application/pdf" ? "pdf" : "jpg";
-    const path = `${companyId}/${Date.now()}-capture.${ext}`;
 
-    const supabase = createClient();
-    const { error: upErr } = await supabase.storage
-      .from("documents")
-      .upload(path, file, { contentType: mediaType });
+    const result = await uploadToStorage(file, "captures");
 
-    if (upErr) {
-      console.error("[capture] upload:", upErr.message);
-      setError("Upload failed — check your connection and try again.");
+    if ("error" in result) {
+      setError(result.error);
       setUploading(false);
       return;
     }
 
-    if (pathRef.current) pathRef.current.value = path;
+    if (pathRef.current) pathRef.current.value = result.key;
     if (typeRef.current) typeRef.current.value = mediaType;
     if (nameRef.current) nameRef.current.value = file.name || `capture.${ext}`;
     // Hand over to the server action; `uploading` stays true so the busy panel

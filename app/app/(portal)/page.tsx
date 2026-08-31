@@ -2,7 +2,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getActiveCompany } from "@/lib/books/repo";
 import { loadStatements } from "@/lib/books/statements";
-import { createClient } from "@/lib/supabase/server";
+import { count, desc, gte } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { documents, ledgerEntries } from "@/lib/db/schema";
+import { onlyThisCompany } from "@/lib/db/tenant";
 import { MobileHome, type MobileTxn } from "@/components/app/mobile/MobileHome";
 
 export const metadata = { title: "Overview — Mizan" };
@@ -68,38 +71,49 @@ export default async function OverviewPage() {
   const company = await getActiveCompany();
   if (!company) redirect("/app/onboarding");
 
-  const supabase = await createClient();
   const flowStart = new Date();
   flowStart.setMonth(flowStart.getMonth() - 5);
   const flowStartIso = `${flowStart.getFullYear()}-${String(flowStart.getMonth() + 1).padStart(2, "0")}-01`;
 
-  const [{ pnl, tax, hasData }, { data: ledger }, { count: docCount }, { data: recentRaw }, { data: flowRaw }] =
-    await Promise.all([
-      loadStatements(company.id),
-      supabase.from("ledger_entries").select("status").eq("company_id", company.id),
-      supabase
-        .from("documents")
-        .select("id", { count: "exact", head: true })
-        .eq("company_id", company.id),
-      supabase
-        .from("ledger_entries")
-        .select("id, description, category, direction, amount, currency, entry_date")
-        .eq("company_id", company.id)
-        .order("created_at", { ascending: false })
-        .limit(6),
-      supabase
-        .from("ledger_entries")
-        .select("entry_date, direction, amount")
-        .eq("company_id", company.id)
-        .gte("entry_date", flowStartIso),
-    ]);
+  const [{ pnl, tax, hasData }, ledger, docCountRows, recentRaw, flowRaw] = await Promise.all([
+    loadStatements(company.id),
+    db
+      .select({ status: ledgerEntries.status })
+      .from(ledgerEntries)
+      .where(onlyThisCompany(ledgerEntries, company.id)),
+    db
+      .select({ value: count() })
+      .from(documents)
+      .where(onlyThisCompany(documents, company.id)),
+    db
+      .select({
+        id: ledgerEntries.id,
+        description: ledgerEntries.description,
+        category: ledgerEntries.category,
+        direction: ledgerEntries.direction,
+        amount: ledgerEntries.amount,
+        currency: ledgerEntries.currency,
+        entry_date: ledgerEntries.entryDate,
+      })
+      .from(ledgerEntries)
+      .where(onlyThisCompany(ledgerEntries, company.id))
+      .orderBy(desc(ledgerEntries.createdAt))
+      .limit(6),
+    db
+      .select({
+        entry_date: ledgerEntries.entryDate,
+        direction: ledgerEntries.direction,
+        amount: ledgerEntries.amount,
+      })
+      .from(ledgerEntries)
+      .where(onlyThisCompany(ledgerEntries, company.id, gte(ledgerEntries.entryDate, flowStartIso))),
+  ]);
 
-  const rows = (ledger ?? []) as { status: string }[];
-  const toReview = rows.filter((l) => l.status !== "approved").length;
-  const approved = rows.length - toReview;
-  const docs = docCount ?? 0;
-  const recent = (recentRaw ?? []) as RecentRow[];
-  const { months, max } = cashflow((flowRaw ?? []) as FlowRow[]);
+  const toReview = ledger.filter((l) => l.status !== "approved").length;
+  const approved = ledger.length - toReview;
+  const docs = docCountRows[0]?.value ?? 0;
+  const recent = recentRaw as unknown as RecentRow[];
+  const { months, max } = cashflow(flowRaw as unknown as FlowRow[]);
   const hasFlow = months.some((m) => m.inSum > 0 || m.outSum > 0);
 
   // Month-over-month change in net (income − expense) for the mobile hero delta.
@@ -113,7 +127,7 @@ export default async function OverviewPage() {
   const checklist = [
     { title: "Create your company", body: "Done — your compliance file exists.", href: "/app/settings", cta: "Settings", done: true },
     { title: "Upload your first document", body: "Add an invoice, receipt, or bank statement — Mizan drafts the accounting for you.", href: "/app/documents", cta: "Upload", done: docs > 0 },
-    { title: "Draft your first ledger lines", body: "Extract lines from a document with AI, or add one by hand.", href: "/app/books/ledger", cta: "Open ledger", done: rows.length > 0 },
+    { title: "Draft your first ledger lines", body: "Extract lines from a document with AI, or add one by hand.", href: "/app/books/ledger", cta: "Open ledger", done: ledger.length > 0 },
     { title: "Approve your first line", body: "Approving posts it straight into your double-entry books.", href: "/app/books/ledger", cta: "Review & approve", done: approved > 0 },
     { title: "See your reports", body: "P&L, balance sheet, VAT and corporate tax — live from your approved lines.", href: "/app/reports", cta: "View reports", done: hasData },
   ];

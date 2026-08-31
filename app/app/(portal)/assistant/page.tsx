@@ -1,5 +1,8 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { and, count, eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { documents, ledgerEntries } from "@/lib/db/schema";
+import { onlyThisCompany } from "@/lib/db/tenant";
 import { getActiveCompany, listTransactions } from "@/lib/books/repo";
 import { buildReports } from "@/lib/books/reports";
 import { Assistant, type Nudge } from "@/components/app/Assistant";
@@ -10,23 +13,21 @@ export default async function AssistantPage() {
   const company = await getActiveCompany();
   if (!company) redirect("/app/onboarding");
 
-  const supabase = await createClient();
   const txns = await listTransactions(company.id);
   const reports = buildReports(txns, company.region);
 
-  const [{ data: ledger }, { count: newDocs }] = await Promise.all([
-    supabase
-      .from("ledger_entries")
-      .select("status, category")
-      .eq("company_id", company.id),
-    supabase
-      .from("documents")
-      .select("id", { count: "exact", head: true })
-      .eq("company_id", company.id)
-      .eq("status", "new"),
+  const [ledgerRows, newDocRows] = await Promise.all([
+    db
+      .select({ status: ledgerEntries.status, category: ledgerEntries.category })
+      .from(ledgerEntries)
+      .where(onlyThisCompany(ledgerEntries, company.id)),
+    db
+      .select({ value: count() })
+      .from(documents)
+      .where(onlyThisCompany(documents, company.id, eq(documents.status, "new"))),
   ]);
 
-  const ledgerRows = (ledger ?? []) as { status: string; category: string }[];
+  const newDocs = newDocRows[0]?.value ?? 0;
   const draftLedger = ledgerRows.filter((l) => l.status !== "approved").length;
   const uncategorised = ledgerRows.filter((l) => l.category === "uncategorised").length;
 

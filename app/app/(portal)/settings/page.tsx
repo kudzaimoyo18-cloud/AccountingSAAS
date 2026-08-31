@@ -25,11 +25,11 @@ export default async function SettingsPage() {
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-ink-soft">Jurisdiction</dt>
-              <dd className="font-medium">{company.free_zone ?? "—"}</dd>
+              <dd className="font-medium">{company.freeZone ?? "—"}</dd>
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-ink-soft">License no.</dt>
-              <dd className="tnum font-medium">{company.license_no ?? "—"}</dd>
+              <dd className="tnum font-medium">{company.licenseNo ?? "—"}</dd>
             </div>
           </dl>
         </div>

@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BooksTabs } from "@/components/books/BooksTabs";
-import { createClient } from "@/lib/supabase/server";
+import { desc, ne } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { companyMembers, taxPacks } from "@/lib/db/schema";
+import { onlyThisCompany } from "@/lib/db/tenant";
 import { getActiveCompany } from "@/lib/books/repo";
 import { loadSummary } from "@/lib/books/summary";
 import { generateTaxPack, inviteAgent, revokeAgent } from "@/lib/books/handoff";
@@ -14,7 +17,7 @@ interface PackRow {
   id: string;
   period_label: string;
   status: string;
-  created_at: string;
+  created_at: Date;
   totals: { netProfit?: number; vatDue?: number } | null;
 }
 interface MemberRow {
@@ -33,23 +36,32 @@ export default async function ClosePage({
   if (!company) redirect("/app/onboarding");
 
   const { ok, error } = await searchParams;
-  const supabase = await createClient();
   const { reports } = await loadSummary(company);
   const cfg = REGIONS[company.region];
 
-  const [{ data: packs }, { data: members }] = await Promise.all([
-    supabase
-      .from("tax_packs")
-      .select("id, period_label, status, created_at, totals")
-      .eq("company_id", company.id)
-      .order("created_at", { ascending: false })
+  const [packs, members] = await Promise.all([
+    db
+      .select({
+        id: taxPacks.id,
+        period_label: taxPacks.periodLabel,
+        status: taxPacks.status,
+        created_at: taxPacks.createdAt,
+        totals: taxPacks.totals,
+      })
+      .from(taxPacks)
+      .where(onlyThisCompany(taxPacks, company.id))
+      .orderBy(desc(taxPacks.createdAt))
       .limit(6),
-    supabase
-      .from("company_members")
-      .select("id, invited_email, role, status")
-      .eq("company_id", company.id)
-      .neq("status", "revoked")
-      .order("created_at", { ascending: false }),
+    db
+      .select({
+        id: companyMembers.id,
+        invited_email: companyMembers.invitedEmail,
+        role: companyMembers.role,
+        status: companyMembers.status,
+      })
+      .from(companyMembers)
+      .where(onlyThisCompany(companyMembers, company.id, ne(companyMembers.status, "revoked")))
+      .orderBy(desc(companyMembers.createdAt)),
   ]);
 
   const period =
@@ -171,7 +183,7 @@ export default async function ClosePage({
                       <td className="tnum px-4 py-3 text-right">
                         {p.totals?.vatDue != null ? money(p.totals.vatDue, company.region) : "—"}
                       </td>
-                      <td className="tnum px-4 py-3 text-ink-soft">{longDate(p.created_at, company.region)}</td>
+                      <td className="tnum px-4 py-3 text-ink-soft">{longDate(p.created_at.toISOString().slice(0, 10), company.region)}</td>
                     </tr>
                   ))}
                 </tbody>

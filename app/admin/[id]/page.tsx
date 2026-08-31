@@ -1,8 +1,11 @@
 import Link from "next/link";
-import { redirect, notFound } from "next/navigation";
+import { notFound } from "next/navigation";
 import { PortalShell } from "@/components/PortalShell";
 import { StatusBadge } from "@/components/StatusBadge";
-import { getProfile } from "@/lib/portal";
+import { desc, eq, sql } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { companies, complianceItems, documents } from "@/lib/db/schema";
+import { requireAdmin } from "@/lib/db/tenant";
 import {
   addComplianceItem,
   setComplianceStatus,
@@ -19,30 +22,44 @@ export default async function AdminCompanyPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ error?: string }>;
 }) {
-  const { supabase, profile } = await getProfile();
-  if (profile?.role !== "admin") redirect("/app");
+  await requireAdmin();
 
   const { id } = await params;
   const { error } = await searchParams;
 
-  const { data: company } = await supabase
-    .from("companies")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
-  if (!company) notFound();
+  const [companyRow] = await db.select().from(companies).where(eq(companies.id, id)).limit(1);
+  if (!companyRow) notFound();
 
-  const [{ data: items }, { data: docs }] = await Promise.all([
-    supabase
-      .from("compliance_items")
-      .select("*")
-      .eq("company_id", id)
-      .order("due_date", { ascending: true, nullsFirst: false }),
-    supabase
-      .from("documents")
-      .select("*")
-      .eq("company_id", id)
-      .order("created_at", { ascending: false }),
+  // Aliased to the snake_case names the markup below already uses.
+  const company = {
+    ...companyRow,
+    free_zone: companyRow.freeZone,
+    license_no: companyRow.licenseNo,
+  };
+
+  const [items, docs] = await Promise.all([
+    db
+      .select({
+        id: complianceItems.id,
+        title: complianceItems.title,
+        kind: complianceItems.kind,
+        due_date: complianceItems.dueDate,
+        status: complianceItems.status,
+      })
+      .from(complianceItems)
+      .where(eq(complianceItems.companyId, id))
+      .orderBy(sql`${complianceItems.dueDate} asc nulls last`),
+    db
+      .select({
+        id: documents.id,
+        original_name: documents.originalName,
+        kind: documents.kind,
+        status: documents.status,
+        created_at: documents.createdAt,
+      })
+      .from(documents)
+      .where(eq(documents.companyId, id))
+      .orderBy(desc(documents.createdAt)),
   ]);
 
   return (
@@ -107,11 +124,11 @@ export default async function AdminCompanyPage({
           {error && <p role="alert" className="mt-3 text-sm text-danger">{error}</p>}
         </form>
 
-        {(items ?? []).length === 0 ? (
+        {items.length === 0 ? (
           <p className="mt-6 text-sm text-ink-soft">No items yet.</p>
         ) : (
           <ul className="mt-6 divide-y divide-line rounded-2xl border border-line bg-surface">
-            {(items ?? []).map((item) => (
+            {items.map((item) => (
               <li key={item.id} className="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
                 <div>
                   <p className="text-sm font-medium">{item.title}</p>
@@ -146,11 +163,11 @@ export default async function AdminCompanyPage({
         )}
 
         <h2 className="mt-10 font-display text-xl font-medium">Documents</h2>
-        {(docs ?? []).length === 0 ? (
+        {docs.length === 0 ? (
           <p className="mt-4 text-sm text-ink-soft">No documents uploaded.</p>
         ) : (
           <ul className="mt-4 divide-y divide-line rounded-2xl border border-line bg-surface">
-            {(docs ?? []).map((d) => (
+            {docs.map((d) => (
               <li key={d.id} className="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{d.original_name}</p>

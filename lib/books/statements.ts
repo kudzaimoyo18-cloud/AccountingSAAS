@@ -1,5 +1,9 @@
 import "server-only";
-import { createClient } from "@/lib/supabase/server";
+
+import { and, eq, gte, lte } from "drizzle-orm";
+
+import { db } from "@/lib/db";
+import { accounts, journalEntries, journalLines } from "@/lib/db/schema";
 import {
   trialBalance,
   profitAndLoss,
@@ -9,40 +13,52 @@ import {
 } from "@/lib/accounting";
 import { taxFromLines } from "@/lib/tax";
 
-type JournalLineRow = {
-  debit: number | string;
-  credit: number | string;
-  accounts:
-    | { code: string; name: string; type: AccountType }
-    | { code: string; name: string; type: AccountType }[]
-    | null;
-};
-
 /**
- * Load the company's posted journal lines (RLS-scoped to the owner) and derive
- * the full double-entry picture: trial balance, P&L, balance sheet, VAT and
- * corporate tax. Shared by /app and /app/reports so both read one source.
+ * Load the company's posted journal lines and derive the full double-entry
+ * picture: trial balance, P&L, balance sheet, VAT and corporate tax. Shared by
+ * /app and /app/reports so both read one source.
+ *
+ * The join to journal_entries is what scopes this to one tenant — journal_lines
+ * has no company_id of its own, so the filter has to ride on its parent entry.
+ * Supabase expressed the same thing with `journal_entries!inner(company_id)`.
  */
-export async function loadStatements(companyId: string) {
-  const supabase = await createClient();
-  const { data: raw } = await supabase
-    .from("journal_lines")
-    .select("debit, credit, accounts(code,name,type), journal_entries!inner(company_id)")
-    .eq("journal_entries.company_id", companyId);
-
-  const lines: PostedLine[] = ((raw ?? []) as JournalLineRow[])
-    .map((r) => {
-      const acc = Array.isArray(r.accounts) ? r.accounts[0] : r.accounts;
-      if (!acc) return null;
-      return {
-        code: acc.code,
-        name: acc.name,
-        type: acc.type,
-        debit: Number(r.debit),
-        credit: Number(r.credit),
-      };
+export async function postedLines(
+  companyId: string,
+  range?: { from: string; to: string },
+): Promise<PostedLine[]> {
+  const raw = await db
+    .select({
+      debit: journalLines.debit,
+      credit: journalLines.credit,
+      code: accounts.code,
+      name: accounts.name,
+      type: accounts.type,
     })
-    .filter((x): x is PostedLine => x !== null);
+    .from(journalLines)
+    .innerJoin(journalEntries, eq(journalEntries.id, journalLines.entryId))
+    .innerJoin(accounts, eq(accounts.id, journalLines.accountId))
+    .where(
+      range
+        ? and(
+            eq(journalEntries.companyId, companyId),
+            gte(journalEntries.entryDate, range.from),
+            lte(journalEntries.entryDate, range.to),
+          )
+        : eq(journalEntries.companyId, companyId),
+    );
+
+  return raw.map((r) => ({
+    code: r.code,
+    name: r.name,
+    type: r.type as AccountType,
+    debit: Number(r.debit),
+    credit: Number(r.credit),
+  }));
+}
+
+/** The full double-entry picture for one company. */
+export async function loadStatements(companyId: string) {
+  const lines = await postedLines(companyId);
 
   return {
     lines,

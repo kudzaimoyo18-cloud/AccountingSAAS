@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { PortalShell } from "@/components/PortalShell";
-import { getProfile } from "@/lib/portal";
+import { eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { companies } from "@/lib/db/schema";
+import { requireAdmin } from "@/lib/db/tenant";
+import { postedLines } from "@/lib/books/statements";
 import {
   trialBalance,
   profitAndLoss,
@@ -24,39 +28,16 @@ export default async function ReportsPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ ok?: string; error?: string }>;
 }) {
-  const { supabase, profile } = await getProfile();
-  if (profile?.role !== "admin") redirect("/app");
+  await requireAdmin();
 
   const { id } = await params;
   const { ok, error } = await searchParams;
 
-  const { data: company } = await supabase
-    .from("companies")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
+  const [company] = await db.select().from(companies).where(eq(companies.id, id)).limit(1);
   if (!company) notFound();
 
-  // posted journal lines joined with their account, scoped to this company
-  const { data: raw } = await supabase
-    .from("journal_lines")
-    .select("debit, credit, accounts(code,name,type), journal_entries!inner(company_id)")
-    .eq("journal_entries.company_id", id);
-
-  const lines: PostedLine[] = (raw ?? [])
-    .map((r) => {
-      // supabase types embedded relations as array|object depending on inference
-      const acc = Array.isArray(r.accounts) ? r.accounts[0] : r.accounts;
-      if (!acc) return null;
-      return {
-        code: acc.code as string,
-        name: acc.name as string,
-        type: acc.type as AccountType,
-        debit: Number(r.debit),
-        credit: Number(r.credit),
-      };
-    })
-    .filter((x): x is PostedLine => x !== null);
+  // Posted journal lines joined with their account, scoped to this company.
+  const lines: PostedLine[] = await postedLines(id);
 
   const tb = trialBalance(lines);
   const pnl = profitAndLoss(lines);

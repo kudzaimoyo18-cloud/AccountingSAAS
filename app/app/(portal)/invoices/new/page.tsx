@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { LineEditor } from "@/components/invoices/LineEditor";
+import { listCustomersForPicker } from "@/lib/invoices/repo";
 import { getCompany } from "@/lib/portal";
 import { createInvoice } from "@/lib/invoices/actions";
 import { REGIONS } from "@/lib/demo/regions";
@@ -13,20 +14,14 @@ export default async function NewInvoicePage({
 }: {
   searchParams: Promise<{ error?: string; customer?: string }>;
 }) {
-  const { supabase, company } = await getCompany();
+  const { company } = await getCompany();
   if (!company) redirect("/app/onboarding");
   const { error, customer: preselect } = await searchParams;
 
-  const { data: customerData } = await supabase
-    .from("customers")
-    .select("id, name")
-    .eq("company_id", company.id)
-    .eq("archived", false)
-    .order("name", { ascending: true });
-  const customers = customerData ?? [];
+  const customers = await listCustomersForPicker(company.id);
 
   const cfg = REGIONS[company.region as Region];
-  const standardVatRate = company.vat_registered ? cfg.vatRate : 0;
+  const standardVatRate = company.vatRegistered ? cfg.vatRate : 0;
   const today = new Date().toISOString().slice(0, 10);
 
   return (
@@ -90,7 +85,7 @@ export default async function NewInvoicePage({
                 currency={cfg.currency}
               />
             </div>
-            {!company.vat_registered && (
+            {!company.vatRegistered && (
               <p className="mt-2 text-xs text-ink-soft">
                 Your company is set as not VAT-registered, so no VAT is added. Change this
                 in Settings if that&apos;s wrong.
