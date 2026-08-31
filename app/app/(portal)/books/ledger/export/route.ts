@@ -1,9 +1,10 @@
 import { NextRequest } from "next/server";
 import { getActiveCompany } from "@/lib/books/repo";
-import { createClient } from "@/lib/supabase/server";
+import { listLedgerEntriesForExport } from "@/lib/books/ledger-query";
 
 // CSV export of the ledger, honouring the same filters as the ledger view so
-// "what you see is what you export". RLS scopes rows to the caller's company.
+// "what you see is what you export" — both build their WHERE clause with
+// ledgerWhere(), which pins rows to the caller's company.
 
 const COLUMNS = [
   "entry_date",
@@ -35,30 +36,19 @@ export async function GET(req: NextRequest) {
   const direction = params.get("direction") ?? "";
   const category = params.get("category") ?? "";
 
-  const supabase = await createClient();
-  let query = supabase
-    .from("ledger_entries")
-    .select(COLUMNS.join(", "))
-    .eq("company_id", company.id)
-    .order("entry_date", { ascending: true, nullsFirst: false })
-    .order("created_at", { ascending: true });
-
-  if (q) query = query.or(`description.ilike.%${q}%,counterparty.ilike.%${q}%`);
-  if (["draft", "reviewed", "approved"].includes(status)) {
-    query = query.eq("status", status);
-  }
-  if (["income", "expense"].includes(direction)) {
-    query = query.eq("direction", direction);
-  }
-  if (category) query = query.eq("category", category);
-
-  const { data, error } = await query;
-  if (error) {
-    console.error("[books/ledger/export]", error.message);
+  let rows: Record<string, unknown>[];
+  try {
+    rows = (await listLedgerEntriesForExport(company.id, {
+      q,
+      status,
+      direction,
+      category,
+    })) as unknown as Record<string, unknown>[];
+  } catch (err) {
+    console.error("[books/ledger/export]", err instanceof Error ? err.message : err);
     return new Response("Export failed", { status: 500 });
   }
 
-  const rows = (data ?? []) as unknown as Record<string, unknown>[];
   const lines = [
     COLUMNS.join(","),
     ...rows.map((r) => COLUMNS.map((c) => csvCell(r[c])).join(",")),

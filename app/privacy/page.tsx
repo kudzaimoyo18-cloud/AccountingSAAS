@@ -51,7 +51,9 @@ export default function PrivacyPage() {
 
       <LegalSection heading="5. Who processes data on our behalf (sub-processors)">
         <ul className="list-disc space-y-1.5 pl-5">
-          <li><span className="font-medium text-ink">Supabase</span> — database, authentication, and file storage.</li>
+          <li><span className="font-medium text-ink">Neon</span> — database hosting.</li>
+          <li><span className="font-medium text-ink">Stack Auth</span> — authentication and account management.</li>
+          <li><span className="font-medium text-ink">Cloudflare R2</span> — storage of documents you upload.</li>
           <li><span className="font-medium text-ink">Vercel</span> — application hosting and basic analytics.</li>
           <li><span className="font-medium text-ink">Anthropic</span> — AI categorisation of low-confidence transactions.</li>
         </ul>
@@ -68,10 +70,11 @@ export default function PrivacyPage() {
 
       <LegalSection heading="7. Storage and security">
         <p>
-          Your data is stored with Supabase on managed cloud infrastructure. Each company&rsquo;s data is isolated using
-          row-level security, transmitted over encrypted connections, and protected by access controls. No
-          method of storage or transmission is completely secure, but we take reasonable measures to protect
-          your data.
+          Your data is stored with Neon (database) and Cloudflare R2 (uploaded documents) on managed cloud
+          infrastructure. Each company&rsquo;s data is isolated by access controls that scope every request to the
+          company you are signed in to, documents are stored in a private bucket reachable only through
+          short-lived links issued to you, and all data is transmitted over encrypted connections. No method of
+          storage or transmission is completely secure, but we take reasonable measures to protect your data.
         </p>
       </LegalSection>
 

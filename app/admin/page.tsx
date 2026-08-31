@@ -1,37 +1,50 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { PortalShell } from "@/components/PortalShell";
 import { StatusBadge } from "@/components/StatusBadge";
-import { getProfile } from "@/lib/portal";
+import { desc, eq, sql } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { companies as companiesTable, complianceItems } from "@/lib/db/schema";
+import { requireAdmin } from "@/lib/db/tenant";
 import { setCompanyStatus } from "@/lib/admin-actions";
 
 export const metadata = { title: "Admin — Mizan" };
 
 export default async function AdminPage() {
-  const { supabase, profile } = await getProfile();
-  if (profile?.role !== "admin") redirect("/app");
+  await requireAdmin();
 
-  const { data: companies } = await supabase
-    .from("companies")
-    .select("*, compliance_items(id, status)")
-    .order("created_at", { ascending: false });
+  // Deliberately cross-tenant: this is the admin client list. The open/overdue
+  // counts are aggregated in SQL rather than by pulling every compliance row.
+  const companies = await db
+    .select({
+      id: companiesTable.id,
+      name: companiesTable.name,
+      free_zone: companiesTable.freeZone,
+      plan: companiesTable.plan,
+      status: companiesTable.status,
+      open: sql<number>`count(*) filter (where ${complianceItems.status} is not null
+        and ${complianceItems.status} <> 'filed')`.mapWith(Number),
+      overdue: sql<boolean>`bool_or(${complianceItems.status} = 'overdue')`,
+    })
+    .from(companiesTable)
+    .leftJoin(complianceItems, eq(complianceItems.companyId, companiesTable.id))
+    .groupBy(companiesTable.id)
+    .orderBy(desc(companiesTable.createdAt));
 
   return (
     <PortalShell active="/admin" isAdmin>
       <div className="mx-auto max-w-5xl">
         <h1 className="font-display text-3xl font-semibold tracking-tight">Clients</h1>
         <p className="tnum mt-1 text-sm text-ink-soft">
-          {(companies ?? []).length} companies
+          {companies.length} companies
         </p>
 
-        {(companies ?? []).length === 0 ? (
+        {companies.length === 0 ? (
           <p className="mt-10 text-sm text-ink-soft">No clients yet.</p>
         ) : (
           <ul className="mt-8 divide-y divide-line rounded-2xl border border-line bg-surface">
-            {(companies ?? []).map((c) => {
-              const items = (c.compliance_items ?? []) as { status: string }[];
-              const open = items.filter((i) => i.status !== "filed").length;
-              const overdue = items.some((i) => i.status === "overdue");
+            {companies.map((c) => {
+              const open = c.open ?? 0;
+              const overdue = Boolean(c.overdue);
               return (
                 <li
                   key={c.id}

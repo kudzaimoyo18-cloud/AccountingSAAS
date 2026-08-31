@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { InvoiceStatusPill } from "@/components/invoices/ui";
+import { desc, eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { customers as customersTable, invoices } from "@/lib/db/schema";
+import { onlyThisCompany } from "@/lib/db/tenant";
 import { getCompany } from "@/lib/portal";
 import { updateCustomer, setCustomerArchived } from "@/lib/customers/actions";
 import { moneyExact, longDate } from "@/lib/demo/format";
@@ -24,33 +28,38 @@ export default async function CustomerDetailPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ error?: string; ok?: string }>;
 }) {
-  const { supabase, company } = await getCompany();
+  const { company } = await getCompany();
   if (!company) redirect("/app/onboarding");
   const { id } = await params;
   const { error, ok } = await searchParams;
   const region = company.region as Region;
 
-  const { data: customer } = await supabase
-    .from("customers")
-    .select("*")
-    .eq("id", id)
-    .eq("company_id", company.id)
-    .maybeSingle();
+  const [customer] = await db
+    .select()
+    .from(customersTable)
+    .where(onlyThisCompany(customersTable, company.id, eq(customersTable.id, id)))
+    .limit(1);
   if (!customer) notFound();
 
-  const { data: invoiceData } = await supabase
-    .from("invoices")
-    .select("id, number, issue_date, due_date, status, total")
-    .eq("company_id", company.id)
-    .eq("customer_id", id)
-    .order("issue_date", { ascending: false });
-  const invoices = (invoiceData ?? []) as InvoiceRow[];
+  const invoiceRows = await db
+    .select({
+      id: invoices.id,
+      number: invoices.number,
+      issue_date: invoices.issueDate,
+      due_date: invoices.dueDate,
+      status: invoices.status,
+      total: invoices.total,
+    })
+    .from(invoices)
+    .where(onlyThisCompany(invoices, company.id, eq(invoices.customerId, id)))
+    .orderBy(desc(invoices.issueDate));
+  const customerInvoices = invoiceRows as InvoiceRow[];
 
   const num = (v: number | string) => (typeof v === "number" ? v : parseFloat(v) || 0);
-  const outstanding = invoices
+  const outstanding = customerInvoices
     .filter((i) => i.status === "sent")
     .reduce((sum, i) => sum + num(i.total), 0);
-  const lifetime = invoices
+  const lifetime = customerInvoices
     .filter((i) => i.status === "sent" || i.status === "paid")
     .reduce((sum, i) => sum + num(i.total), 0);
 
@@ -112,13 +121,13 @@ export default async function CustomerDetailPage({
               New invoice
             </Link>
           </div>
-          {invoices.length === 0 ? (
+          {customerInvoices.length === 0 ? (
             <div className="card mt-4 text-center">
               <p className="text-sm text-ink-soft">No invoices for {customer.name} yet.</p>
             </div>
           ) : (
             <ul className="mt-4 divide-y divide-line rounded-2xl border border-line bg-surface">
-              {invoices.map((inv) => (
+              {customerInvoices.map((inv) => (
                 <li key={inv.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5">
                   <div>
                     <Link href={`/app/invoices/${inv.id}`} className="text-sm font-medium text-evergreen-deep hover:underline">

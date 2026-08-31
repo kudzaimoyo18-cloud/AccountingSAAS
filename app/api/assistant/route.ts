@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { createClient } from "@/lib/supabase/server";
+import { getUser } from "@/lib/db/tenant";
 import { getActiveCompany } from "@/lib/books/repo";
 import { loadSummary } from "@/lib/books/summary";
 
@@ -15,11 +15,9 @@ const MODEL = process.env.MIZAN_ASSISTANT_MODEL || "claude-opus-4-8";
 export async function POST(req: NextRequest): Promise<Response> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
 
-  // Auth first — the assistant only ever sees the caller's own data (RLS).
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Auth first — the assistant only ever sees the caller's own data, which
+  // getActiveCompany() below pins to their company.
+  const user = await getUser();
   if (!user) return new Response("Unauthorized", { status: 401 });
 
   // Graceful degradation: no key → the page's nudges still work, chat explains.

@@ -1,6 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Keep the database driver out of the bundle. @neondatabase/serverless opens a
+  // real WebSocket and pulls in optional native addons; bundling it produced
+  // "bufferUtil.mask is not a function" and dropped every connection.
+  serverExternalPackages: ["@neondatabase/serverless", "ws", "better-auth"],
   experimental: {
     serverActions: {
       // Receipt photos are submitted through a Server Action. Keep this below

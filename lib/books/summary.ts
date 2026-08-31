@@ -11,7 +11,9 @@ import "server-only";
 // the DB reads and hands off.
 
 import { loadStatements } from "./statements";
-import { createClient } from "@/lib/supabase/server";
+import { db } from "@/lib/db";
+import { ledgerEntries } from "@/lib/db/schema";
+import { onlyThisCompany } from "@/lib/db/tenant";
 import { profitAndLoss, balanceSheet, type PostedLine } from "@/lib/accounting";
 import { computeVat } from "@/lib/tax";
 import {
@@ -27,20 +29,33 @@ export { summarizeStatements } from "./summary-core";
 
 /**
  * Load the company's headline numbers from the double-entry journals, plus the
- * approved-ledger detail rows for the Excel pack. RLS scopes both reads to the
- * caller (owner or invited agent).
+ * approved-ledger detail rows for the Excel pack. Both reads are scoped by the
+ * caller's company id, which comes from the session via requireTenant().
  */
 export async function loadSummary(
   company: BooksCompany,
 ): Promise<{ reports: Reports; ledgerTxns: Txn[] }> {
-  const supabase = await createClient();
   const { lines } = await loadStatements(company.id);
 
-  const { data: ledgerRaw } = await supabase
-    .from("ledger_entries")
-    .select("id, entry_date, description, counterparty, direction, category, amount, vat_amount, status, source")
-    .eq("company_id", company.id);
-  const ledger = (ledgerRaw ?? []) as LedgerEntryRow[];
+  // Aliased back to the database's snake_case names so LedgerEntryRow and the
+  // pure mapping in summary-core.ts keep the exact shape they were written for.
+  const ledgerRaw = await db
+    .select({
+      id: ledgerEntries.id,
+      entry_date: ledgerEntries.entryDate,
+      description: ledgerEntries.description,
+      counterparty: ledgerEntries.counterparty,
+      direction: ledgerEntries.direction,
+      category: ledgerEntries.category,
+      amount: ledgerEntries.amount,
+      vat_amount: ledgerEntries.vatAmount,
+      status: ledgerEntries.status,
+      source: ledgerEntries.source,
+    })
+    .from(ledgerEntries)
+    .where(onlyThisCompany(ledgerEntries, company.id));
+
+  const ledger = ledgerRaw as unknown as LedgerEntryRow[];
 
   const approved = ledger.filter((l) => l.status === "approved");
   const reviewCount = ledger.length - approved.length;
@@ -58,7 +73,7 @@ export async function loadSummary(
     reviewCount,
     periodStart,
     periodEnd,
-    region: company.region,
+    region: company.region as "ae" | "gb",
   });
 
   const ledgerTxns = approved

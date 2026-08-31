@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app/AppShell";
 import { getCompany } from "@/lib/portal";
-import { linkMemberships } from "@/lib/books/repo";
 import { PendingApproval } from "@/components/app/PendingApproval";
 
 // Shared shell for the whole authenticated portal. This runs once when entering
@@ -17,7 +16,6 @@ export default async function PortalLayout({
   children: React.ReactNode;
 }) {
   // Link any pending tax-agent invites for this user, once per portal entry.
-  await linkMemberships();
 
   const { user, profile, company } = await getCompany();
   if (!company) redirect("/app/onboarding");

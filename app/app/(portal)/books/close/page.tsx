@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BooksTabs } from "@/components/books/BooksTabs";
-import { createClient } from "@/lib/supabase/server";
+import { desc, ne } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { companyMembers, taxPacks } from "@/lib/db/schema";
+import { onlyThisCompany } from "@/lib/db/tenant";
 import { getActiveCompany } from "@/lib/books/repo";
 import { loadSummary } from "@/lib/books/summary";
 import { generateTaxPack, inviteAgent, revokeAgent } from "@/lib/books/handoff";
@@ -14,12 +17,13 @@ interface PackRow {
   id: string;
   period_label: string;
   status: string;
-  created_at: string;
+  created_at: Date;
   totals: { netProfit?: number; vatDue?: number } | null;
 }
 interface MemberRow {
   id: string;
   invited_email: string;
+  invite_token: string | null;
   role: string;
   status: string;
 }
@@ -33,23 +37,33 @@ export default async function ClosePage({
   if (!company) redirect("/app/onboarding");
 
   const { ok, error } = await searchParams;
-  const supabase = await createClient();
   const { reports } = await loadSummary(company);
   const cfg = REGIONS[company.region];
 
-  const [{ data: packs }, { data: members }] = await Promise.all([
-    supabase
-      .from("tax_packs")
-      .select("id, period_label, status, created_at, totals")
-      .eq("company_id", company.id)
-      .order("created_at", { ascending: false })
+  const [packs, members] = await Promise.all([
+    db
+      .select({
+        id: taxPacks.id,
+        period_label: taxPacks.periodLabel,
+        status: taxPacks.status,
+        created_at: taxPacks.createdAt,
+        totals: taxPacks.totals,
+      })
+      .from(taxPacks)
+      .where(onlyThisCompany(taxPacks, company.id))
+      .orderBy(desc(taxPacks.createdAt))
       .limit(6),
-    supabase
-      .from("company_members")
-      .select("id, invited_email, role, status")
-      .eq("company_id", company.id)
-      .neq("status", "revoked")
-      .order("created_at", { ascending: false }),
+    db
+      .select({
+        id: companyMembers.id,
+        invited_email: companyMembers.invitedEmail,
+        invite_token: companyMembers.inviteToken,
+        role: companyMembers.role,
+        status: companyMembers.status,
+      })
+      .from(companyMembers)
+      .where(onlyThisCompany(companyMembers, company.id, ne(companyMembers.status, "revoked")))
+      .orderBy(desc(companyMembers.createdAt)),
   ]);
 
   const period =
@@ -106,8 +120,8 @@ export default async function ClosePage({
           <div className="card">
             <h2 className="font-display text-lg font-semibold">Give your tax agent access</h2>
             <p className="mt-1 text-sm text-ink-soft">
-              Invite your accountant or tax agent by email. They get read-only access to these books once they
-              sign in.
+              Invite your accountant or tax agent, then send them the private link that appears
+              below. Whoever opens it while signed in gets read-only access to these books.
             </p>
             <form action={inviteAgent} className="mt-4 flex flex-wrap gap-2">
               <input
@@ -129,9 +143,14 @@ export default async function ClosePage({
               <ul className="mt-4 divide-y divide-line">
                 {(members as MemberRow[]).map((m) => (
                   <li key={m.id} className="flex items-center justify-between py-2.5 text-sm">
-                    <span>
+                    <span className="min-w-0">
                       <span className="font-medium">{m.invited_email}</span>
                       <span className="ml-2 text-xs text-ink-soft">{m.role.replace("_", " ")} · {m.status}</span>
+                      {m.status === "pending" && m.invite_token && (
+                        <span className="mt-1 block break-all font-mono text-[0.7rem] text-ink-soft">
+                          /app/invite/{m.invite_token}
+                        </span>
+                      )}
                     </span>
                     <form action={revokeAgent}>
                       <input type="hidden" name="id" value={m.id} />
@@ -142,7 +161,9 @@ export default async function ClosePage({
               </ul>
             )}
             <p className="mt-3 text-xs text-ink-soft">
-              Email delivery of invites is coming soon — for now, share the sign-in link with them directly.
+              Email delivery is coming soon — for now copy the link above and send it to them yourself.
+              Treat it like a password: anyone who opens it while signed in gains access. Revoking an
+              invite invalidates the link immediately.
             </p>
           </div>
         </div>
@@ -171,7 +192,7 @@ export default async function ClosePage({
                       <td className="tnum px-4 py-3 text-right">
                         {p.totals?.vatDue != null ? money(p.totals.vatDue, company.region) : "—"}
                       </td>
-                      <td className="tnum px-4 py-3 text-ink-soft">{longDate(p.created_at, company.region)}</td>
+                      <td className="tnum px-4 py-3 text-ink-soft">{longDate(p.created_at.toISOString().slice(0, 10), company.region)}</td>
                     </tr>
                   ))}
                 </tbody>

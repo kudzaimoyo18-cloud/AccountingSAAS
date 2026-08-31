@@ -2,18 +2,18 @@
 
 import { useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { createClient } from "@/lib/supabase/client";
 import { captureReceipt } from "@/lib/books/capture-actions";
+import { uploadToStorage } from "@/lib/upload-client";
 
 // Cash Now mobile Scan capture (design: MOBILE › Mobile SCAN). A camera
-// viewfinder frame that opens the phone's real camera on tap, uploads the photo
-// straight to Supabase Storage (the direct-to-storage path — no 413), and hands
-// the storage path to captureReceipt. Same reliable upload as CaptureUpload,
+// viewfinder frame that opens the phone's real camera on tap, PUTs the photo
+// straight to R2 with a presigned URL (the direct-to-storage path — no 413), and
+// hands the storage key to captureReceipt. Same reliable upload as CaptureUpload,
 // dressed as the design's viewfinder.
 
 const MAX_BYTES = 15 * 1024 * 1024;
 
-export function MobileScanCapture({ companyId }: { companyId: string }) {
+export function MobileScanCapture() {
   const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const pathRef = useRef<HTMLInputElement>(null);
@@ -32,19 +32,14 @@ export function MobileScanCapture({ companyId }: { companyId: string }) {
     setUploading(true);
     const mediaType = file.type || "application/octet-stream";
     const ext = mediaType === "image/png" ? "png" : mediaType === "application/pdf" ? "pdf" : "jpg";
-    const path = `${companyId}/${Date.now()}-capture.${ext}`;
 
-    const supabase = createClient();
-    const { error: upErr } = await supabase.storage
-      .from("documents")
-      .upload(path, file, { contentType: mediaType });
-    if (upErr) {
-      console.error("[scan] upload:", upErr.message);
-      setError("Upload failed — check your connection and try again.");
+    const result = await uploadToStorage(file, "captures");
+    if ("error" in result) {
+      setError(result.error);
       setUploading(false);
       return;
     }
-    if (pathRef.current) pathRef.current.value = path;
+    if (pathRef.current) pathRef.current.value = result.key;
     if (typeRef.current) typeRef.current.value = mediaType;
     if (nameRef.current) nameRef.current.value = file.name || `capture.${ext}`;
     formRef.current?.requestSubmit();

@@ -1,17 +1,20 @@
 "use server";
 
-// Mobile receipt capture: the browser uploads the photo straight to Supabase
-// Storage (RLS scopes writes to the caller's company folder), then this action
-// receives only the storage PATH, downloads the file server-side, runs AI
-// extraction, and lands the user on the review step. Keeping the photo out of
-// the action request means Vercel's ~4.5MB function body cap can never 413 a
-// capture again. Scoped to the caller's own company from the session.
+// Mobile receipt capture: the browser uploads the photo straight to R2 with a
+// presigned PUT, then this action receives only the storage KEY, reads the file
+// back server-side, runs AI extraction, and lands the user on the review step.
+// Keeping the photo out of the action request means Vercel's ~4.5MB function
+// body cap can never 413 a capture again. Scoped to the caller's own company
+// from the session — the key's company prefix is re-checked on every read.
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { getActiveCompany } from "@/lib/books/repo";
+import { and, eq } from "drizzle-orm";
+
+import { db } from "@/lib/db";
+import { documents, ledgerEntries } from "@/lib/db/schema";
+import { requireWritableTenant } from "@/lib/db/tenant";
+import { assertCompanyKey, getObjectBytes, statObject } from "@/lib/storage";
 import {
   extractLedgerEntries,
   isExtractable,
@@ -24,61 +27,58 @@ const DIRECTIONS = ["income", "expense"] as const;
 const MAX_BYTES = 15 * 1024 * 1024;
 
 export async function captureReceipt(formData: FormData) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-  const company = await getActiveCompany();
-  if (!company) redirect("/app/onboarding");
+  const { company, user } = await requireWritableTenant();
 
-  // The browser already uploaded the photo; we only get its storage path.
-  // Accept nothing outside the caller's own company folder.
-  const path = String(formData.get("path") ?? "");
+  // The browser already uploaded the photo; we only get its storage key.
+  // Accept nothing outside the caller's own company prefix.
+  const key = String(formData.get("path") ?? "");
   const originalName = String(formData.get("original_name") ?? "").slice(0, 200);
-  if (!path || !path.startsWith(`${company.id}/`) || path.includes("..")) {
+  try {
+    assertCompanyKey(key, company.id);
+  } catch {
     redirect(`${CAPTURE}?error=No+photo+received`);
   }
 
-  // 1) Pull the photo back out of the private bucket (owner read policy).
-  const { data: file, error: dlErr } = await supabase.storage
-    .from("documents")
-    .download(path);
-  if (dlErr || !file) {
-    console.error("[capture] download:", dlErr?.message);
+  // 1) Confirm the upload actually landed, and check type/size before spending
+  //    an AI call on it.
+  const meta = await statObject(key, company.id);
+  if (!meta) {
     redirect(`${CAPTURE}?error=Could+not+read+the+uploaded+photo+—+try+again`);
   }
 
   const mediaType =
-    file.type || String(formData.get("media_type") ?? "") || "application/octet-stream";
+    meta.contentType || String(formData.get("media_type") ?? "") || "application/octet-stream";
   if (!isExtractable(mediaType)) {
     redirect(`${CAPTURE}?error=That+file+type+is+not+supported`);
   }
-  if (file.size > MAX_BYTES) redirect(`${CAPTURE}?error=Photo+too+large+(max+15MB)`);
+  if (meta.size > MAX_BYTES) redirect(`${CAPTURE}?error=Photo+too+large+(max+15MB)`);
 
   // 2) Record it as a receipt document.
-  const { data: doc, error: dbErr } = await supabase
-    .from("documents")
-    .insert({
-      company_id: company.id,
-      uploaded_by: user.id,
-      storage_path: path,
-      original_name: originalName || "capture",
-      kind: "receipt",
-    })
-    .select("id")
-    .single();
-  if (dbErr || !doc) {
-    console.error("[capture] db:", dbErr?.message);
+  let docId: string;
+  try {
+    const [doc] = await db
+      .insert(documents)
+      .values({
+        companyId: company.id,
+        uploadedBy: user.id,
+        storagePath: key,
+        originalName: originalName || "capture",
+        kind: "receipt",
+      })
+      .returning({ id: documents.id });
+    if (!doc) throw new Error("insert returned no row");
+    docId = doc.id;
+  } catch (err) {
+    console.error("[capture] db:", err instanceof Error ? err.message : err);
     redirect(`${CAPTURE}?error=Could+not+record+the+photo`);
   }
 
   // 3) AI-extract straight away so the user reviews on the spot.
-  const base64 = Buffer.from(await file.arrayBuffer()).toString("base64");
   let extracted;
   try {
+    const bytes = await getObjectBytes(key, company.id);
     extracted = await extractLedgerEntries({
-      data: base64,
+      data: bytes.toString("base64"),
       mediaType,
       fileName: originalName || "receipt photo",
       docKind: "receipt",
@@ -90,14 +90,13 @@ export async function captureReceipt(formData: FormData) {
   }
 
   if (extracted.entries.length === 0) {
-    redirect(`${CAPTURE}?doc=${doc.id}&warn=No+ledger+lines+found+in+that+photo`);
+    redirect(`${CAPTURE}?doc=${docId!}&warn=No+ledger+lines+found+in+that+photo`);
   }
 
-  const admin = createAdminClient();
   const rows = extracted.entries.map((e) => ({
-    company_id: company.id,
-    document_id: doc.id,
-    entry_date: e.entry_date?.trim() ? e.entry_date.trim() : null,
+    companyId: company.id,
+    documentId: docId!,
+    entryDate: e.entry_date?.trim() ? e.entry_date.trim() : null,
     description: String(e.description ?? "").slice(0, 500),
     counterparty: e.counterparty?.trim() ? e.counterparty.trim().slice(0, 200) : null,
     category: LEDGER_CATEGORIES.includes(e.category as LedgerCategory)
@@ -105,25 +104,30 @@ export async function captureReceipt(formData: FormData) {
       : "uncategorised",
     direction: DIRECTIONS.includes(e.direction) ? e.direction : "expense",
     currency: (e.currency || "AED").trim().slice(0, 8).toUpperCase(),
-    amount: Number.isFinite(e.amount) ? e.amount : 0,
-    vat_amount: Number.isFinite(e.vat_amount) ? e.vat_amount : 0,
+    amount: String(Number.isFinite(e.amount) ? e.amount : 0),
+    vatAmount: String(Number.isFinite(e.vat_amount) ? e.vat_amount : 0),
     confidence:
-      typeof e.confidence === "number" ? Math.max(0, Math.min(1, e.confidence)) : null,
+      typeof e.confidence === "number" ? String(Math.max(0, Math.min(1, e.confidence))) : null,
     source: "ai" as const,
     status: "draft" as const,
   }));
 
-  const { error: insErr } = await admin.from("ledger_entries").insert(rows);
-  if (insErr) {
-    console.error("[capture] insert:", insErr.message);
+  try {
+    await db.transaction(async (tx) => {
+      await tx.insert(ledgerEntries).values(rows);
+      await tx
+        .update(documents)
+        .set({ status: "processed" })
+        .where(and(eq(documents.id, docId!), eq(documents.companyId, company.id)));
+    });
+  } catch (err) {
+    console.error("[capture] insert:", err instanceof Error ? err.message : err);
     redirect(`${CAPTURE}?error=Could+not+save+the+drafted+lines`);
   }
 
-  await admin.from("documents").update({ status: "processed" }).eq("id", doc.id);
-
   revalidatePath(CAPTURE);
   revalidatePath("/app/books/ledger");
-  redirect(`${CAPTURE}?doc=${doc.id}`);
+  redirect(`${CAPTURE}?doc=${docId!}`);
 }
 
 // Approve (or delete) a drafted line from the capture review screen, staying on

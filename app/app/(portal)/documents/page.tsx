@@ -1,6 +1,10 @@
 import { redirect } from "next/navigation";
 import { StatusBadge } from "@/components/StatusBadge";
 import { DocumentUploadForm } from "@/components/app/DocumentUploadForm";
+import { desc } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { documents } from "@/lib/db/schema";
+import { onlyThisCompany } from "@/lib/db/tenant";
 import { getCompany } from "@/lib/portal";
 
 export const metadata = { title: "Documents — Mizan" };
@@ -17,15 +21,21 @@ export default async function DocumentsPage({
 }: {
   searchParams: Promise<{ error?: string; ok?: string }>;
 }) {
-  const { supabase, company } = await getCompany();
+  const { company } = await getCompany();
   if (!company) redirect("/app/onboarding");
   const { error, ok } = await searchParams;
 
-  const { data: docs } = await supabase
-    .from("documents")
-    .select("*")
-    .eq("company_id", company.id)
-    .order("created_at", { ascending: false });
+  const docs = await db
+    .select({
+      id: documents.id,
+      original_name: documents.originalName,
+      kind: documents.kind,
+      status: documents.status,
+      created_at: documents.createdAt,
+    })
+    .from(documents)
+    .where(onlyThisCompany(documents, company.id))
+    .orderBy(desc(documents.createdAt));
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -33,13 +43,13 @@ export default async function DocumentsPage({
           Invoices, receipts, bank statements — drop them here, we do the rest.
         </p>
 
-        <DocumentUploadForm companyId={company.id} serverError={error} serverOk={Boolean(ok)} />
+        <DocumentUploadForm serverError={error} serverOk={Boolean(ok)} />
 
-        {(docs ?? []).length === 0 ? (
+        {docs.length === 0 ? (
           <p className="mt-10 text-center text-sm text-ink-soft">No documents yet.</p>
         ) : (
           <ul className="mt-8 divide-y divide-line rounded-2xl border border-line bg-surface">
-            {(docs ?? []).map((d) => (
+            {docs.map((d) => (
               <li key={d.id} className="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{d.original_name}</p>

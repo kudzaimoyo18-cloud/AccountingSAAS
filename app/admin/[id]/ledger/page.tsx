@@ -2,7 +2,11 @@ import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { PortalShell } from "@/components/PortalShell";
 import { StatusBadge } from "@/components/StatusBadge";
-import { getProfile } from "@/lib/portal";
+import { asc, desc, eq, sql } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { companies, documents, ledgerEntries } from "@/lib/db/schema";
+import { requireAdmin } from "@/lib/db/tenant";
+import { ledgerColumns } from "@/lib/books/ledger-query";
 import { LEDGER_CATEGORIES } from "@/lib/ai";
 import {
   extractDocument,
@@ -34,34 +38,34 @@ export default async function LedgerPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ error?: string; ok?: string }>;
 }) {
-  const { supabase, profile } = await getProfile();
-  if (profile?.role !== "admin") redirect("/app");
+  await requireAdmin();
 
   const { id } = await params;
   const { error, ok } = await searchParams;
 
-  const { data: company } = await supabase
-    .from("companies")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
+  const [company] = await db.select().from(companies).where(eq(companies.id, id)).limit(1);
   if (!company) notFound();
 
-  const [{ data: entries }, { data: docs }] = await Promise.all([
-    supabase
-      .from("ledger_entries")
-      .select("*")
-      .eq("company_id", id)
-      .order("entry_date", { ascending: true, nullsFirst: false })
-      .order("created_at", { ascending: true }),
-    supabase
-      .from("documents")
-      .select("*")
-      .eq("company_id", id)
-      .order("created_at", { ascending: false }),
+  const [entries, docs] = await Promise.all([
+    db
+      .select({ ...ledgerColumns, created_at: ledgerEntries.createdAt })
+      .from(ledgerEntries)
+      .where(eq(ledgerEntries.companyId, id))
+      .orderBy(sql`${ledgerEntries.entryDate} asc nulls last`, asc(ledgerEntries.createdAt)),
+    db
+      .select({
+        id: documents.id,
+        original_name: documents.originalName,
+        kind: documents.kind,
+        status: documents.status,
+        created_at: documents.createdAt,
+      })
+      .from(documents)
+      .where(eq(documents.companyId, id))
+      .orderBy(desc(documents.createdAt)),
   ]);
 
-  const rows = entries ?? [];
+  const rows = entries;
   const income = rows.filter((r) => r.direction === "income");
   const expense = rows.filter((r) => r.direction === "expense");
   const sum = (arr: typeof rows, key: "amount" | "vat_amount") =>

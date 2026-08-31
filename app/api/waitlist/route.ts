@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { saveWaitlist, type Region } from "@/lib/storage";
+import { saveWaitlist, type Region } from "@/lib/waitlist";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_LEN = 200;
