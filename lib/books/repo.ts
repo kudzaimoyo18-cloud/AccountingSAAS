@@ -14,12 +14,7 @@ import {
   transactions as txnTable,
   vendorRules as vendorRulesTable,
 } from "@/lib/db/schema";
-import {
-  getActiveCompany as getTenant,
-  linkPendingInvites,
-  onlyThisCompany,
-  getProfile,
-} from "@/lib/db/tenant";
+import { getActiveCompany as getTenant, onlyThisCompany } from "@/lib/db/tenant";
 import { fromRow, type Txn, type TxnRow } from "./types";
 import type { VendorRule } from "./categorize";
 import type { Region } from "@/lib/demo/types";
@@ -78,17 +73,6 @@ export const getActiveCompany = cache(async (): Promise<BooksCompany | null> => 
     status: c.status,
   };
 });
-
-/**
- * Claim any pending company_member invites addressed to this user's email (an
- * invited tax agent's first visit). Called once per request from the (portal)
- * layout. Replaces the old link_my_memberships() SQL function.
- */
-export async function linkMemberships(): Promise<void> {
-  const found = await getProfile();
-  if (!found) return;
-  await linkPendingInvites(found.user.id, found.user.email);
-}
 
 /**
  * Every transaction for one company, newest first.

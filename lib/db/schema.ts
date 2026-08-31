@@ -121,6 +121,12 @@ export const companyMembers = pgTable(
     role: text("role").notNull().default("tax_agent"),
     status: text("status").notNull().default("pending"),
     invitedBy: text("invited_by").references(() => profiles.id),
+    // Unguessable acceptance token. Membership is granted by whoever opens this
+    // link while signed in — NOT by matching the signed-up email address.
+    // Trusting the email would let anyone who signs up as the invited address
+    // (sign-up needs no verification) walk into the company's books.
+    inviteToken: text("invite_token").unique(),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

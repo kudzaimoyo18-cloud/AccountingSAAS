@@ -6,7 +6,14 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { companies, documents } from "@/lib/db/schema";
 import { requireProfile, requireWritableTenant } from "@/lib/db/tenant";
-import { assertCompanyKey, buildKey, createUploadUrl, statObject } from "@/lib/storage";
+import {
+  assertCompanyKey,
+  buildKey,
+  createUploadUrl,
+  deleteObject,
+  statObject,
+  MAX_UPLOAD_BYTES,
+} from "@/lib/storage";
 import { headers } from "next/headers";
 
 import { auth } from "@/lib/auth";
@@ -106,6 +113,14 @@ export async function recordDocument(formData: FormData) {
   const meta = await statObject(key, company.id);
   if (!meta) {
     redirect("/app/documents?error=Upload+did+not+complete+—+please+try+again");
+  }
+
+  // A presigned PUT cannot cap the body size, so the client-side limit is only
+  // advisory — anything that holds the URL could push an arbitrarily large
+  // object into the bucket. Enforce the ceiling here and bin what exceeds it.
+  if (meta.size > MAX_UPLOAD_BYTES) {
+    await deleteObject(key, company.id).catch(() => {});
+    redirect("/app/documents?error=File+too+large+(max+25MB)");
   }
 
   try {

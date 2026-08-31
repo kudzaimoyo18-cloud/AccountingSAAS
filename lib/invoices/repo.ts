@@ -191,10 +191,18 @@ export async function getInvoiceByToken(token: string): Promise<PublicInvoice | 
 
   if (!row) return null;
 
+  // Defence in depth: the token already pins the invoice, but invoice_lines
+  // carries its own company_id, so scope on it too rather than trusting the
+  // join alone.
   const lines = await db
     .select(lineColumns)
     .from(invoiceLinesTable)
-    .where(eq(invoiceLinesTable.invoiceId, row.id));
+    .where(
+      and(
+        eq(invoiceLinesTable.invoiceId, row.id),
+        eq(invoiceLinesTable.companyId, row.companyId),
+      ),
+    );
 
   return {
     invoice: invoiceFromRow(toRow(row as unknown as RawInvoice)),

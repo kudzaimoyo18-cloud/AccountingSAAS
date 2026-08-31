@@ -23,6 +23,7 @@ interface PackRow {
 interface MemberRow {
   id: string;
   invited_email: string;
+  invite_token: string | null;
   role: string;
   status: string;
 }
@@ -56,6 +57,7 @@ export default async function ClosePage({
       .select({
         id: companyMembers.id,
         invited_email: companyMembers.invitedEmail,
+        invite_token: companyMembers.inviteToken,
         role: companyMembers.role,
         status: companyMembers.status,
       })
@@ -118,8 +120,8 @@ export default async function ClosePage({
           <div className="card">
             <h2 className="font-display text-lg font-semibold">Give your tax agent access</h2>
             <p className="mt-1 text-sm text-ink-soft">
-              Invite your accountant or tax agent by email. They get read-only access to these books once they
-              sign in.
+              Invite your accountant or tax agent, then send them the private link that appears
+              below. Whoever opens it while signed in gets read-only access to these books.
             </p>
             <form action={inviteAgent} className="mt-4 flex flex-wrap gap-2">
               <input
@@ -141,9 +143,14 @@ export default async function ClosePage({
               <ul className="mt-4 divide-y divide-line">
                 {(members as MemberRow[]).map((m) => (
                   <li key={m.id} className="flex items-center justify-between py-2.5 text-sm">
-                    <span>
+                    <span className="min-w-0">
                       <span className="font-medium">{m.invited_email}</span>
                       <span className="ml-2 text-xs text-ink-soft">{m.role.replace("_", " ")} · {m.status}</span>
+                      {m.status === "pending" && m.invite_token && (
+                        <span className="mt-1 block break-all font-mono text-[0.7rem] text-ink-soft">
+                          /app/invite/{m.invite_token}
+                        </span>
+                      )}
                     </span>
                     <form action={revokeAgent}>
                       <input type="hidden" name="id" value={m.id} />
@@ -154,7 +161,9 @@ export default async function ClosePage({
               </ul>
             )}
             <p className="mt-3 text-xs text-ink-soft">
-              Email delivery of invites is coming soon — for now, share the sign-in link with them directly.
+              Email delivery is coming soon — for now copy the link above and send it to them yourself.
+              Treat it like a password: anyone who opens it while signed in gains access. Revoking an
+              invite invalidates the link immediately.
             </p>
           </div>
         </div>

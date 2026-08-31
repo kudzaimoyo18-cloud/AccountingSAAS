@@ -93,10 +93,6 @@ export const getProfile = cache(async (): Promise<{
     })
     .returning();
 
-  // A brand-new user may have been invited to a company before signing up.
-  // This is the old link_my_memberships() SQL function.
-  await linkPendingInvites(user.id, user.email);
-
   return { user, profile: created };
 });
 
@@ -106,18 +102,34 @@ export async function requireProfile() {
   return found;
 }
 
-/** Claim any invites addressed to this email. Replaces link_my_memberships(). */
-export async function linkPendingInvites(userId: string, email: string) {
-  await db
+/**
+ * Accept a company invite by its unguessable token.
+ *
+ * Deliberately NOT keyed on email. The previous version activated any pending
+ * invite whose invited_email matched the signed-in address, but sign-up needs
+ * no email verification — so registering as someone else's address was enough
+ * to be handed read access to their company's books. Possession of the invite
+ * link is the credential now, the same model as the public invoice share link.
+ *
+ * Returns the company id on success, or null when the token is unknown or the
+ * invite has already been used or revoked.
+ */
+export async function acceptInvite(token: string, userId: string): Promise<string | null> {
+  if (!token || token.length < 20) return null;
+
+  const [claimed] = await db
     .update(companyMembers)
-    .set({ userId, status: "active" })
+    .set({ userId, status: "active", acceptedAt: new Date() })
     .where(
       and(
-        sql`${companyMembers.userId} is null`,
+        eq(companyMembers.inviteToken, token),
         eq(companyMembers.status, "pending"),
-        eq(sql`lower(${companyMembers.invitedEmail})`, email.toLowerCase()),
+        sql`${companyMembers.userId} is null`,
       ),
-    );
+    )
+    .returning({ companyId: companyMembers.companyId });
+
+  return claimed?.companyId ?? null;
 }
 
 export async function isAdmin(): Promise<boolean> {

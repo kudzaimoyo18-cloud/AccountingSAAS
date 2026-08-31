@@ -1,5 +1,6 @@
 "use server";
 
+import { randomBytes } from "crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
@@ -61,9 +62,14 @@ export async function inviteAgent(formData: FormData) {
   if (role !== "tax_agent" && role !== "accountant" && role !== "viewer")
     redirect(`${CLOSE}?error=Invalid+role`);
 
+  // Possession of this token is what grants access — see acceptInvite(). It is
+  // regenerated on every re-invite so a previously shared link stops working.
+  const inviteToken = randomBytes(24).toString("base64url");
+
   try {
     // The email is lowercased above, which is what makes the plain-column unique
     // index (company_id, invited_email) a valid conflict target. See the schema.
+    // The address is a label for the owner's benefit; it grants nothing.
     await db
       .insert(companyMembers)
       .values({
@@ -72,20 +78,18 @@ export async function inviteAgent(formData: FormData) {
         role,
         status: "pending",
         invitedBy: user.id,
+        inviteToken,
       })
       .onConflictDoUpdate({
         target: [companyMembers.companyId, companyMembers.invitedEmail],
-        set: { role, status: "pending", invitedBy: user.id },
+        set: { role, status: "pending", invitedBy: user.id, inviteToken, userId: null, acceptedAt: null },
       });
   } catch (err) {
     console.error("[inviteAgent]", err instanceof Error ? err.message : err);
     redirect(`${CLOSE}?error=Could+not+send+the+invite`);
   }
 
-  // The invite is claimed when the INVITEE next signs in — getProfile() calls
-  // linkPendingInvites() for them. (The old code called link_my_memberships()
-  // here, which ran as the inviter and so could only ever match the inviter's
-  // own pending invites; it never did anything for the person being invited.)
+  // The owner shares the link; opening it while signed in accepts the invite.
 
   revalidatePath(CLOSE);
   redirect(`${CLOSE}?ok=Invited+${encodeURIComponent(email)}`);
@@ -100,7 +104,8 @@ export async function revokeAgent(formData: FormData) {
   // belonging to another tenant by submitting its id. RLS used to cover this.
   const revoked = await db
     .update(companyMembers)
-    .set({ status: "revoked", userId: null })
+    // Clearing the token invalidates any link already shared.
+    .set({ status: "revoked", userId: null, inviteToken: null })
     .where(onlyThisCompany(companyMembers, company.id, eq(companyMembers.id, id)))
     .returning({ id: companyMembers.id });
 

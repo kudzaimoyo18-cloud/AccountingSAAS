@@ -55,6 +55,22 @@ export const auth = betterAuth({
     },
   },
 
+  rateLimit: {
+    // Better Auth only rate-limits in production by default. Turn it on
+    // everywhere and tighten the sign-in/sign-up paths, which are the ones worth
+    // brute-forcing. Storage is the database, so the limit holds across the
+    // serverless instances Vercel spins up.
+    enabled: true,
+    storage: "database",
+    window: 60,
+    max: 100,
+    customRules: {
+      "/sign-in/email": { window: 60, max: 10 },
+      "/sign-up/email": { window: 60, max: 5 },
+      "/forget-password": { window: 60, max: 5 },
+    },
+  },
+
   advanced: {
     // The books are a same-site app; there is no cross-site embedding.
     defaultCookieAttributes: {
