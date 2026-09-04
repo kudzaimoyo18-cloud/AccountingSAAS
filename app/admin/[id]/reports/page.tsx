@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
-import { PortalShell } from "@/components/PortalShell";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { companies } from "@/lib/db/schema";
@@ -46,7 +45,7 @@ export default async function ReportsPage({
   const hasData = lines.length > 0;
 
   return (
-    <PortalShell active="/admin" isAdmin>
+    <>
       <div className="mx-auto max-w-5xl">
         <Link href={`/admin/${id}`} className="text-sm text-ink-soft hover:text-ink">
           ← {company.name}
@@ -195,7 +194,7 @@ export default async function ReportsPage({
           formal tax advice or an audit.
         </p>
       </div>
-    </PortalShell>
+    </>
   );
 }
 

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PortalShell } from "@/components/PortalShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { desc, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
@@ -63,7 +62,7 @@ export default async function AdminCompanyPage({
   ]);
 
   return (
-    <PortalShell active="/admin" isAdmin>
+    <>
       <div className="mx-auto max-w-4xl">
         <h1 className="font-display text-3xl font-semibold tracking-tight">
           {company.name}
@@ -192,6 +191,6 @@ export default async function AdminCompanyPage({
           </ul>
         )}
       </div>
-    </PortalShell>
+    </>
   );
 }

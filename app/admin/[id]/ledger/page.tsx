@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
-import { PortalShell } from "@/components/PortalShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { asc, desc, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
@@ -78,7 +77,7 @@ export default async function LedgerPage({
   const vatPaid = sum(expense, "vat_amount");
 
   return (
-    <PortalShell active="/admin" isAdmin>
+    <>
       <div className="mx-auto max-w-6xl">
         <Link href={`/admin/${id}`} className="text-sm text-ink-soft hover:text-ink">
           ← {company.name}
@@ -313,6 +312,6 @@ export default async function LedgerPage({
           substitute for formal tax advice.
         </p>
       </div>
-    </PortalShell>
+    </>
   );
 }

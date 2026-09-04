@@ -1,4 +1,4 @@
-import { PortalShell } from "@/components/PortalShell";
+import { AdminTabs } from "@/components/admin/AdminTabs";
 import { desc } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { waitlist } from "@/lib/db/schema";
@@ -62,8 +62,9 @@ export default async function AdminWaitlistPage({
   ];
 
   return (
-    <PortalShell active="/admin/waitlist" isAdmin>
-      <div className="mx-auto max-w-4xl">
+    <>
+      <div className="mx-auto max-w-4xl space-y-6">
+        <AdminTabs />
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="font-display text-3xl font-semibold tracking-tight">Waitlist</h1>
@@ -151,6 +152,6 @@ export default async function AdminWaitlistPage({
           </ul>
         )}
       </div>
-    </PortalShell>
+    </>
   );
 }

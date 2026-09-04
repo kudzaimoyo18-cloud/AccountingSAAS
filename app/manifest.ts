@@ -29,7 +29,10 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: "any",
       },
       {
-        src: "/icons/icon-512.png",
+        // Separate art, not the same square: Android crops maskable icons to a
+        // circle-ish shape, so the mark is scaled to 60% on the brand ground to
+        // stay inside the safe zone. Reusing icon-512 here sliced the logo.
+        src: "/icons/icon-maskable-512.png",
         sizes: "512x512",
         type: "image/png",
         purpose: "maskable",

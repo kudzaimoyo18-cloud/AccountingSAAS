@@ -40,6 +40,14 @@ const GROUPS: Group[] = [
   },
 ];
 
+// Admin destinations, shown only to admins. "/admin" is a prefix of
+// "/admin/waitlist", so Clients must not light up while Waitlist is open —
+// see isAdminItemActive below.
+const ADMIN: Item[] = [
+  { href: "/admin", label: "Clients", icon: "M8 1l2 4 4.5.5-3.5 3 1 4.5L8 10.5 4 13l1-4.5-3.5-3L6 5z" },
+  { href: "/admin/waitlist", label: "Waitlist", icon: "M2 4h12M2 8h12M2 12h8" },
+];
+
 const BOTTOM: Item[] = [
   { href: "/app/billing", label: "Billing", icon: "M2 4h12v8H2zM2 7h12" },
   { href: "/app/settings", label: "Settings", icon: "M8 5.5A2.5 2.5 0 1 0 8 10.5 2.5 2.5 0 0 0 8 5.5zM8 1v2M8 13v2M15 8h-2M3 8H1M12.95 3.05l-1.4 1.4M4.46 11.54l-1.41 1.41M12.95 12.95l-1.4-1.4M4.46 4.46 3.05 3.05" },
@@ -114,7 +122,12 @@ export function AppShell({
 }) {
   const isActive = useIsActive();
   const pathname = usePathname();
-  const adminActive = pathname === "/admin" || pathname.startsWith("/admin/");
+  // Clients covers /admin and every per-client page under it, but not Waitlist.
+  const isAdminItemActive = (item: Item) =>
+    item.href === "/admin"
+      ? pathname === "/admin" ||
+        (pathname.startsWith("/admin/") && !pathname.startsWith("/admin/waitlist"))
+      : pathname === item.href || pathname.startsWith(item.href + "/");
   const title = pageTitle(pathname);
   const initials = (userEmail ?? "?").slice(0, 2).toUpperCase();
 
@@ -155,14 +168,11 @@ export function AppShell({
           {isAdmin && (
             <div>
               <p className="nav-group-label">Admin</p>
-              <Link
-                href="/admin"
-                prefetch
-                className={`sidebar-link ${adminActive ? "sidebar-link-active" : ""}`}
-              >
-                <NavIcon d="M8 1l2 4 4.5.5-3.5 3 1 4.5L8 10.5 4 13l1-4.5-3.5-3L6 5z" />
-                Console
-              </Link>
+              <div className="flex flex-col gap-0.5">
+                {ADMIN.map((item) => (
+                  <NavLink key={item.href} item={item} active={isAdminItemActive(item)} />
+                ))}
+              </div>
             </div>
           )}
         </nav>

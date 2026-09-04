@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
-import { PortalShell } from "@/components/PortalShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
@@ -82,7 +81,7 @@ export default async function BankPage({
   const matched = rows.filter((t) => t.status === "matched").length;
 
   return (
-    <PortalShell active="/admin" isAdmin>
+    <>
       <div className="mx-auto max-w-5xl">
         <Link href={`/admin/${id}`} className="text-sm text-ink-soft hover:text-ink">← {company.name}</Link>
         <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight">Bank reconciliation</h1>
@@ -170,6 +169,6 @@ export default async function BankPage({
           Reconciliation is a draft control for review by a licensed FTA tax agent.
         </p>
       </div>
-    </PortalShell>
+    </>
   );
 }

@@ -5,6 +5,11 @@ const nextConfig = {
   // real WebSocket and pulls in optional native addons; bundling it produced
   // "bufferUtil.mask is not a function" and dropped every connection.
   serverExternalPackages: ["@neondatabase/serverless", "ws", "better-auth"],
+  // Android's Digital Asset Links must live at this exact path. Next ignores
+  // dot-directories under app/, so the route handler is rewritten into place.
+  async rewrites() {
+    return [{ source: "/.well-known/assetlinks.json", destination: "/api/assetlinks" }];
+  },
   experimental: {
     serverActions: {
       // Receipt photos are submitted through a Server Action. Keep this below

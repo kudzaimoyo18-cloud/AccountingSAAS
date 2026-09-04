@@ -96,5 +96,10 @@ export async function setCompanyStatus(formData: FormData) {
 
   revalidatePath(`/admin/${id}`);
   revalidatePath("/admin");
-  redirect(`/admin/${id}`);
+
+  // Approving from the queue should leave you in the queue, not drop you into
+  // the client you just cleared. Only our own paths are honoured — never an
+  // arbitrary URL from the form.
+  const next = String(formData.get("next") ?? "");
+  redirect(next === "/admin" ? "/admin" : `/admin/${id}`);
 }

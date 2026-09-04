@@ -1,10 +1,16 @@
 import { redirect } from "next/navigation";
+import { DeleteAccount } from "@/components/app/DeleteAccount";
 import { getCompany } from "@/lib/portal";
 import { TIERS } from "@/lib/content";
 
 export const metadata = { title: "Settings — Mizan" };
 
-export default async function SettingsPage() {
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
   const { user, company } = await getCompany();
   if (!company) redirect("/app/onboarding");
 
@@ -53,6 +59,8 @@ export default async function SettingsPage() {
             . Your founding-member rate is locked.
           </p>
         </div>
+
+        <DeleteAccount error={error} />
       </div>
   );
 }

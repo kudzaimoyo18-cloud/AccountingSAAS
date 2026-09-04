@@ -120,7 +120,7 @@ export const companyMembers = pgTable(
     invitedEmail: text("invited_email").notNull(),
     role: text("role").notNull().default("tax_agent"),
     status: text("status").notNull().default("pending"),
-    invitedBy: text("invited_by").references(() => profiles.id),
+    invitedBy: text("invited_by").references(() => profiles.id, { onDelete: "set null" }),
     // Unguessable acceptance token. Membership is granted by whoever opens this
     // link while signed in — NOT by matching the signed-up email address.
     // Trusting the email would let anyone who signs up as the invited address
@@ -266,7 +266,7 @@ export const transactions = pgTable(
     confidence: numeric("confidence", { precision: 4, scale: 3 }),
     source: text("source").notNull().default("manual"),
     reason: text("reason"),
-    createdBy: text("created_by").references(() => profiles.id),
+    createdBy: text("created_by").references(() => profiles.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     postedAt: timestamp("posted_at", { withTimezone: true }),
   },
@@ -292,7 +292,7 @@ export const vendorRules = pgTable(
     vatRate: numeric("vat_rate", { precision: 5, scale: 4 }).notNull().default("0"),
     direction: text("direction"),
     hits: integer("hits").notNull().default(0),
-    createdBy: text("created_by").references(() => profiles.id),
+    createdBy: text("created_by").references(() => profiles.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -318,7 +318,7 @@ export const taxPacks = pgTable(
     recipientEmail: text("recipient_email"),
     totals: jsonb("totals"),
     status: text("status").notNull().default("draft"),
-    createdBy: text("created_by").references(() => profiles.id),
+    createdBy: text("created_by").references(() => profiles.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -350,7 +350,7 @@ export const ledgerEntries = pgTable(
     source: text("source").notNull().default("ai"),
     status: text("status").notNull().default("draft"),
     notes: text("notes"),
-    reviewedBy: text("reviewed_by").references(() => profiles.id),
+    reviewedBy: text("reviewed_by").references(() => profiles.id, { onDelete: "set null" }),
     // Reversal audit trail. These columns already existed in the database from
     // an earlier iteration; no code path writes them yet, but they are declared
     // here so migrations stay additive rather than dropping a designed feature.
@@ -422,7 +422,9 @@ export const journalLines = pgTable(
       .references(() => journalEntries.id, { onDelete: "cascade" }),
     accountId: uuid("account_id")
       .notNull()
-      .references(() => accounts.id),
+      // Cascade so a company delete can unwind its chart of accounts. Without
+      // this the whole delete was refused — see drizzle/0002_deletable.sql.
+      .references(() => accounts.id, { onDelete: "cascade" }),
     debit: numeric("debit", { precision: 14, scale: 2 }).notNull().default("0"),
     credit: numeric("credit", { precision: 14, scale: 2 }).notNull().default("0"),
   },
@@ -502,7 +504,7 @@ export const customers = pgTable(
     address: text("address"),
     notes: text("notes"),
     archived: boolean("archived").notNull().default(false),
-    createdBy: text("created_by").references(() => profiles.id),
+    createdBy: text("created_by").references(() => profiles.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("customers_company_name_idx").on(t.companyId, t.name)],
@@ -538,7 +540,7 @@ export const invoices = pgTable(
     paymentLink: text("payment_link"), // per-invoice pay link (Ziina/Stripe later)
     placeOfSupply: text("place_of_supply"), // FTA e-invoicing
     einvoice: jsonb("einvoice"), // ASP/Peppol metadata later
-    createdBy: text("created_by").references(() => profiles.id),
+    createdBy: text("created_by").references(() => profiles.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

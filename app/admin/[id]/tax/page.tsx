@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
-import { PortalShell } from "@/components/PortalShell";
 import { desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { accountingPeriods, companies } from "@/lib/db/schema";
@@ -58,7 +57,7 @@ export default async function TaxPage({
   const hasData = lines.length > 0;
 
   return (
-    <PortalShell active="/admin" isAdmin>
+    <>
       <div className="mx-auto max-w-4xl">
         <Link href={`/admin/${id}`} className="text-sm text-ink-soft hover:text-ink">← {company.name}</Link>
         <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight">VAT &amp; corporate tax</h1>
@@ -179,7 +178,7 @@ export default async function TaxPage({
           for formal tax advice.
         </p>
       </div>
-    </PortalShell>
+    </>
   );
 }
 

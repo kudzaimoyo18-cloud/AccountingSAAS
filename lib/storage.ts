@@ -5,7 +5,9 @@ import {
   GetObjectCommand,
   PutObjectCommand,
   DeleteObjectCommand,
+  DeleteObjectsCommand,
   HeadObjectCommand,
+  ListObjectsV2Command,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
@@ -174,4 +176,48 @@ export async function statObject(
   } catch {
     return null;
   }
+}
+
+/**
+ * Delete every object belonging to one company.
+ *
+ * Used when a company (or the account that owns it) is deleted: the database
+ * rows cascade away, and the files behind them have to go too or we keep a
+ * customer's receipts and bank statements after they asked us not to. Google
+ * Play's account-deletion policy requires this, and so does basic decency.
+ *
+ * Paged, because a company with a year of receipts exceeds one list response.
+ */
+export async function deleteCompanyObjects(companyId: string): Promise<number> {
+  if (!isStorageConfigured()) return 0;
+
+  const prefix = `${companyId}/`;
+  const client = r2();
+  let deleted = 0;
+  let token: string | undefined;
+
+  do {
+    const listed = await client.send(
+      new ListObjectsV2Command({ Bucket: BUCKET, Prefix: prefix, ContinuationToken: token }),
+    );
+    const keys = (listed.Contents ?? [])
+      .map((o) => o.Key)
+      .filter((k): k is string => Boolean(k) && k!.startsWith(prefix));
+
+    if (keys.length > 0) {
+      // DeleteObjects takes at most 1000 keys per call, which is also the most
+      // ListObjectsV2 returns, so one batch per page is always enough.
+      await client.send(
+        new DeleteObjectsCommand({
+          Bucket: BUCKET,
+          Delete: { Objects: keys.map((Key) => ({ Key })), Quiet: true },
+        }),
+      );
+      deleted += keys.length;
+    }
+
+    token = listed.IsTruncated ? listed.NextContinuationToken : undefined;
+  } while (token);
+
+  return deleted;
 }
